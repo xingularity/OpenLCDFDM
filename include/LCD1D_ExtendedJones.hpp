@@ -23,6 +23,7 @@
 
 namespace LCD1D{
     using TRANSRESULT = DOUBLEARRAY2D;
+    using STOKESRESULT = std::vector<std::vector<std::vector<Eigen::Vector3d> > >;
     class ExtendedJones: LCDOptics::ExtendedJonesBase{
     public:
         ///For sigle wavelength calculation
@@ -30,13 +31,16 @@ namespace LCD1D{
         ///For multiwavelengths calculation
         ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
         const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_);
-        void calculateExtendedJones();
-        const TRANSRESULT& transmissions();
+        void calculateExtendedJones(bool ifStokes = false);
+        const TRANSRESULT& getTransmissions();
+        const STOKESRESULT& getStokes();
     private:
         ///results of transmissions on corresponding angles in inAngles
         TRANSRESULT transmissions;
         ///temporary array for transmission results of one wave length for multi-wavelength calculation.
         TRANSRESULT transTemp;
+        ///store the stokes values
+        STOKESRESULT stokes;
     };
 };
 

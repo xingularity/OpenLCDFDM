@@ -16,8 +16,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef LCD1D_EXTENDEDJONES1D_HPP
-#define LCD1D_EXTENDEDJONES1D_HPP
+#ifndef LCD1D_EXTENDEDJONES_HPP
+#define LCD1D_EXTENDEDJONES_HPP
 
 #include "LCD_ExtendedJonesBase.hpp"
 

@@ -25,7 +25,7 @@ namespace LCDOptics{
     using LCD::EigenC22;
     using LCD::EigenM22;
     using Eigen::Vector3d;
-    using POLARTRACE = std::vector<Eigen::Vector2d>
+    using POLARTRACE = std::vector<Eigen::Vector2cd>;
     ///Jones matrix is a 2x2 matrix.
     typedef EigenC22 JONESMAT;
 
@@ -43,8 +43,8 @@ namespace LCDOptics{
     protected:
         ///calculate polarizations based on input Jones matrix
         void calculatePolarization(const JONESMAT& m, POLARTRACE& lightPolar){
-            Eigen::Vector2d polar = lightPolar.back();
-            polar = M*polar;
+            Eigen::Vector2cd polar = lightPolar.back();
+            polar = m*polar;
             lightPolar.push_back(polar);
         }
         ///thickness of this layer
@@ -266,9 +266,8 @@ namespace LCDOptics{
         return nAvg;
     }
 
-    double Optical2X2OneLayer<UniaxialType>::calcJonesMatrix(JONESMAT& m,
+    double Optical2X2OneLayer<UniaxialType>::calcJonesMatrix(JONESMAT& M,
     POLARTRACE& lightPolar, Angle& iang, double lambda, double lastn){
-        Eigen::Vector2d tempPolar = lightPolar.back();
         NKoNKe nn = findNK(lambda);
         const COMPD& no = std::get<0>(nn);
         const COMPD& ne = std::get<1>(nn);

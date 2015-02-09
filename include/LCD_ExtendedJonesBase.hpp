@@ -16,8 +16,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef LCD_EXTENDEDJONES_HPP
-#define LCD_EXTENDEDJONES_HPP
+#ifndef LCD_EXTENDEDJONESBASE_HPP
+#define LCD_EXTENDEDJONESBASE_HPP
 
 #include "LCD_Optics2x2.hpp"
 #include <cassert>

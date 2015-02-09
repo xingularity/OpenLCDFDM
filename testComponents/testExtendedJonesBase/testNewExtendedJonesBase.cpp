@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../../include/LCD_ExtendedJones.hpp"
+#include "../../include/LCD_ExtendedJonesBase.hpp"
 
 using namespace std;
 using namespace LCDOptics;

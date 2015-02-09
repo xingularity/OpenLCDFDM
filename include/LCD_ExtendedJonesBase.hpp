@@ -176,6 +176,7 @@ namespace LCDOptics{
         }
         ///refractive index of the air
         const double nAir{1.000293};
+        int lcLayerindex{-1};
     };
 };
 

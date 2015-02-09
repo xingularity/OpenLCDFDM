@@ -23,6 +23,7 @@ ExtendedJones::ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _i
 ExtendedJonesBase(_materials, _inAngles, targetLambda, lightSrcSpectrum_)
 {
     transmissions = DOUBLEARRAY2D(_inAngles.size(), DOUBLEARRAY1D(_inAngles[0].size(), 0.0));
+    //find LC layer
 }
 
 ExtendedJones::ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
@@ -32,3 +33,17 @@ ExtendedJonesBase(_materials, _inAngles, start_lambda_, end_lambda_, step_lambda
     transmissions = DOUBLEARRAY2D(_inAngles.size(), DOUBLEARRAY1D(_inAngles[0].size(), 0.0));
     transTemp = DOUBLEARRAY2D(_inAngles.size(), DOUBLEARRAY1D(_inAngles[0].size(), 0.0));
 }
+
+void ExtendedJones::calculateExtendedJones(bool ifStokes = false){
+
+}
+
+const TRANSRESULT& ExtendedJones::getTransmissions(){
+
+}
+
+const STOKESRESULT& ExtendedJones::getStokes(){
+
+}
+
+void ExtendedJones::resetToCalculateOtherDiretors(DIRVEC _in);

@@ -149,13 +149,14 @@ namespace LCDOptics{
     class Optical2X2OneLayer<UniaxialType>: public Optical2X2OneLayerBase{
     public:
         ///For uniaxial material.
-        Optical2X2OneLayer(double thickness, NKoNKeData _nk);
+        Optical2X2OneLayer(double thickness, NKoNKeData _nk, bool isLCLayer_=false);
         void resetDirectors(DIRVEC _in);
         ///calculate one jones matrix and return its average refractive index and incident angles
         virtual double calcJonesMatrix(JONESMAT& m, Angle& iang, double lambda, double lastn);
         ///calculate one jones matrix and light polarization, return the average refractive index and incident angles
         virtual double calcJonesMatrix(JONESMAT& m, POLARTRACE& lightPolar, Angle& iang, double lambda, double lastn);
         virtual void interpolateNKForLambdas(DOUBLEARRAY1D lambdas_);
+        bool ifLCLayer(){return isLCLayer;}
     private:
         ///find nk for corresponding lambda. If find in map, then return. Otherwise, interpolate immediately
         NKoNKe findNK(double lambda);
@@ -163,9 +164,11 @@ namespace LCDOptics{
         NKoNKeData nk;
         ///Interpolation of nk distribution
         SpectrumInterpolator<NKoNKeData> nkInterpolator;
+        bool isLCLayer{false};
     };
 
-    Optical2X2OneLayer<UniaxialType>::Optical2X2OneLayer(double thickness, NKoNKeData _nk){
+    Optical2X2OneLayer<UniaxialType>::Optical2X2OneLayer(double thickness, NKoNKeData _nk, bool isLCLayer_){
+        isLCLayer = isLCLayer_;
         materialtype = UniaxialType;
         this->d = thickness;
         nk = _nk;

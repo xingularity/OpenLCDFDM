@@ -68,7 +68,7 @@ void ExtendedJones::resetStokes(){
         std::vector<STOKESTRACE>(_inAngles[0].size())));
 }
 
-void ExtendedJones::resetToCalculateOtherDiretors(DIRVEC _in){
+void ExtendedJones::resetToCalculateWithNewDiretors(DIRVEC _in){
     if (lcLayerindex >= 0){
         std::shared_ptr<Optical2X2OneLayer<UniaxialType> > tempLayerPtr;
         tempLayerPtr = std::dynamic_pointer_cast<Optical2X2OneLayer<UniaxialType>,

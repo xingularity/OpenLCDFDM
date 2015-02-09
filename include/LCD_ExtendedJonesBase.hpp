@@ -180,11 +180,6 @@ namespace LCDOptics{
         DOUBLEARRAY1D lightSourceSpectrum;
         ///spectral efficiency of human eyes, interpolated to target wavelengths.
         DOUBLEARRAY1D yBarOfLambda;
-        ///clear the containers and reset necessary part to recalculate.
-        void resetBeforeCalculation(){
-            std::cout << "Must overwrite this function in derieved class." << std::endl;
-            assert(0);
-        }
         ///refractive index of the air
         const double nAir{1.000293};
         int lcLayerindex{-1};

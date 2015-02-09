@@ -42,7 +42,7 @@ namespace LCD1D{
         ///return the results of stokes values
         const STOKESRESULT& getStokes();
         ///reset directors in materials and the states of computing components to calculate optics based on input directors.
-        void resetToCalculateOtherDiretors(DIRVEC _in);
+        void resetToCalculateWithNewDiretors(DIRVEC _in);
     private:
         void resetTransmissions();
         void resetTransTemp();

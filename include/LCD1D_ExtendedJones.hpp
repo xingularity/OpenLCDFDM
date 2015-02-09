@@ -16,12 +16,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef LCD_EXTENDEDJONES1D_HPP
-#define LCD_EXTENDEDJONES1D_HPP
+#ifndef LCD1D_EXTENDEDJONES1D_HPP
+#define LCD1D_EXTENDEDJONES1D_HPP
 
 #include "LCD_ExtendedJonesBase.hpp"
 
 namespace LCD1D{
+    using TRANSRESULT = DOUBLEARRAY2D;
     class ExtendedJones: LCDOptics::ExtendedJonesBase{
     public:
         ///For sigle wavelength calculation
@@ -29,10 +30,13 @@ namespace LCD1D{
         ///For multiwavelengths calculation
         ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
         const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_);
-        void calculateTransmission();
+        void calculateExtendedJones();
+        const TRANSRESULT& transmissions();
     private:
-
-
+        ///results of transmissions on corresponding angles in inAngles
+        TRANSRESULT transmissions;
+        ///temporary array for transmission results of one wave length for multi-wavelength calculation.
+        TRANSRESULT transTemp;
     };
 };
 

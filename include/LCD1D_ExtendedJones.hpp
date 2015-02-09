@@ -25,14 +25,14 @@ namespace LCD1D{
     class ExtendedJones: LCDOptics::ExtendedJonesBase{
     public:
         ///For sigle wavelength calculation
-        ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, std::map<double, double> lightSrcSpectrum_);
+        ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, LIGHTSPECTRUMDATA lightSrcSpectrum_);
         ///For multiwavelengths calculation
         ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
-        const double end_lambda_, const double step_lambda_, std::map<double, double> lightSrcSpectrum_);
+        const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_);
         void calculateTransmission();
     private:
-        
-        
+
+
     };
 };
 

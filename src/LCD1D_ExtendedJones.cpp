@@ -19,13 +19,13 @@
 
 using namespace LCD1D;
 
-ExtendedJones::ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, std::map<double, double> lightSrcSpectrum_):
+ExtendedJones::ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, LIGHTSPECTRUMDATA lightSrcSpectrum_):
 ExtendedJonesBase(_materials, _inAngles, targetLambda, lightSrcSpectrum_)
 {
 }
 
 ExtendedJones::ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
-const double end_lambda_, const double step_lambda_, std::map<double, double> lightSrcSpectrum_)
+const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_)
 ExtendedJonesBase(_materials, _inAngles, start_lambda_, end_lambda_, step_lambda_, lightSrcSpectrum_)
 {
 }

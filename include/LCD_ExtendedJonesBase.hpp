@@ -21,7 +21,7 @@
 
 #include "LCD_Optics2x2.hpp"
 #include <cassert>
-#include <limits> 
+#include <limits>
 
 namespace LCDOptics{
     using LCD::DOUBLEARRAY2D;
@@ -118,7 +118,7 @@ namespace LCDOptics{
     class ExtendedJonesBase{
     public:
         ///For sigle wavelength calculation
-        ExtendedJonesBase(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, std::map<double, double> lightSrcSpectrum_):
+        ExtendedJonesBase(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, LIGHTSPECTRUMDATA lightSrcSpectrum_):
         matLayers(_materials), inAngles(_inAngles), lambdas(1, targetLambda)
         {
             matLayerNum = matLayers.size();
@@ -132,7 +132,7 @@ namespace LCDOptics{
         }
         ///For multiwavelengths calculation
         ExtendedJonesBase(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
-        const double end_lambda_, const double step_lambda_, std::map<double, double> lightSrcSpectrum_)
+        const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_)
         :matLayers(_materials), inAngles(_inAngles){
             //create lambdas first
             lambdas.clear();
@@ -151,11 +151,11 @@ namespace LCDOptics{
             interpolator.interpolate(SpectrumEfficiency, yBarOfLambda);
             interpolator.interpolate(lightSrcSpectrum_, lightSourceSpectrum);
         }
-        
+
         const DOUBLEARRAY1D& targetLambdas(){return lambdas;}
         const DOUBLEARRAY1D& targetLightSrcSpectrum(){return lightSourceSpectrum;}
         const DOUBLEARRAY1D& targetYBarOfLambda(){return yBarOfLambda;}
-        
+
     protected:
         ///Incident angles which will be calculated.
         const IAngles inAngles;

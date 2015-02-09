@@ -157,6 +157,17 @@ namespace LCDOptics{
         const DOUBLEARRAY1D& targetYBarOfLambda(){return yBarOfLambda;}
 
     protected:
+        void findLCLayerInMaterilList(){
+            //find LC layer
+            for (int i = 0; i < matLayers.size(); ++i){
+                Optical2X2OneLayer<UniaxialType>* sp = dynamic_cast<Optical2X2OneLayer<UniaxialType>*> (matLayers[i].get());
+                if (sp == NULL) continue;
+                if (sp->ifLCLayer()) {
+                    lcLayerindex = i;
+                    break;
+                }
+            }
+        }
         ///Incident angles which will be calculated.
         const IAngles inAngles;
         ///material list

@@ -22,15 +22,19 @@
 #include "LCD_ExtendedJonesBase.hpp"
 
 namespace LCD1D{
+    using LCDOptics::POLARTRACE;
     using TRANSRESULT = DOUBLEARRAY2D;
-    using STOKESRESULT = std::vector<std::vector<std::vector<Eigen::Vector3d> > >;
+    using STOKESTRACE = std::vector<Eigen::Vector3d>;
+    using STOKESRESULT = std::vector<std::vector<std::vector<STOKESTRACE> > >;
+    ///Main function for extended Jones matrix
     class ExtendedJones: LCDOptics::ExtendedJonesBase{
     public:
         ///For sigle wavelength calculation
-        ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, LIGHTSPECTRUMDATA lightSrcSpectrum_);
+        ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda,
+            LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifStokes=false);
         ///For multiwavelengths calculation
         ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
-        const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_);
+        const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifStokes=false);
         ///main function to calculate xtended Jones.
         void calculateExtendedJones(bool ifStokes = false);
         ///return the transmission results
@@ -40,12 +44,17 @@ namespace LCD1D{
         ///reset directors in materials and the states of computing components to calculate optics based on input directors.
         void resetToCalculateOtherDiretors(DIRVEC _in);
     private:
+        void resetTransmissions();
+        void resetTransTemp();
+        void resetStokes();
         ///results of transmissions on corresponding angles in inAngles
         TRANSRESULT transmissions;
         ///temporary array for transmission results of one wave length for multi-wavelength calculation.
         TRANSRESULT transTemp;
         ///store the stokes values
         STOKESRESULT stokes;
+        ///if user wanna calculate Stokes
+        bool ifCalcStokes{false};
     };
 };
 

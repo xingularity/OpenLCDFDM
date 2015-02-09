@@ -35,7 +35,7 @@ namespace LCD1D{
         ///For multiwavelengths calculation
         ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
         const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifStokes=false);
-        ///main function to calculate xtended Jones.
+        ///main function to calculate extended Jones.
         void calculateExtendedJones(bool ifStokes = false);
         ///return the transmission results
         const TRANSRESULT& getTransmissions();

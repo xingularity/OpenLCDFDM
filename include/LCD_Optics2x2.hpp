@@ -313,6 +313,7 @@ namespace LCDOptics{
         sp_eo << s.dot(e), p.dot(e), s.dot(o), p.dot(o);
         //convert sp coordinate to eo coordinate.
         M=sp_eo*M;
+        calculatePolarization(M, lightPolar);
         double ld=d/layernum;
         double angle[2]; //temp array for theta and phi of one axis
         for (int i=0; i< layernum;i++){
@@ -344,6 +345,7 @@ namespace LCDOptics{
                 EigenM22 eo_trans;
                 eo_trans << e.dot(e1), o.dot(e1), e.dot(o1), o.dot(o1);
                 M=eo_trans*M;
+                calculatePolarization(M, lightPolar);
                 o=o1;e=e1;
             }
         }
@@ -351,6 +353,7 @@ namespace LCDOptics{
         EigenM22 eo_sp;
         eo_sp << e.dot(s), o.dot(s), e.dot(p), o.dot(p);
         M=eo_sp*M;
+        calculatePolarization(M, lightPolar);
         std::get<0>(iang)=theta_r;
         return nAvg;
     }

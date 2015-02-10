@@ -152,12 +152,15 @@ namespace LCDOptics{
             interpolator.interpolate(lightSrcSpectrum_, lightSourceSpectrum);
         }
 
-        const DOUBLEARRAY1D& targetLambdas(){return lambdas;}
-        const DOUBLEARRAY1D& targetLightSrcSpectrum(){return lightSourceSpectrum;}
-        const DOUBLEARRAY1D& targetYBarOfLambda(){return yBarOfLambda;}
+        const int getLCLayerIndex(){return lcLayerindex;}
+        const MATERIALLAYERS2X2CONT& getMaterialLayers()const {return matLayers;}
+        const IAngles& getIncidentAngles()const{return inAngles;}
+        const DOUBLEARRAY1D& targetLambdas()const{return lambdas;}
+        const DOUBLEARRAY1D& targetLightSrcSpectrum()const{return lightSourceSpectrum;}
+        const DOUBLEARRAY1D& targetYBarOfLambda()const{return yBarOfLambda;}
 
     protected:
-        void findLCLayerInMaterilList(){
+        void findLCLayerInMaterialList(){
             //find LC layer
             for (int i = 0; i < matLayers.size(); ++i){
                 Optical2X2OneLayer<UniaxialType>* sp = dynamic_cast<Optical2X2OneLayer<UniaxialType>*> (matLayers[i].get());
@@ -168,6 +171,7 @@ namespace LCDOptics{
                 }
             }
         }
+
         ///Incident angles which will be calculated.
         const IAngles inAngles;
         ///material list

@@ -23,26 +23,42 @@ using namespace LCD1D;
 ExtendedJones::ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifStokes):
 ExtendedJonesBase(_materials, _inAngles, targetLambda, lightSrcSpectrum_)
 {
-    resetTransmissions();
-    resetTransTemp();
-    findLCLayerInMaterilList();
+    findLCLayerInMaterialList();
     ifCalcStokes = _ifStokes;
     if (ifCalcStokes)resetStokes();
 }
 
 ExtendedJones::ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
-const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifStokes)
+const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifStokes):
 ExtendedJonesBase(_materials, _inAngles, start_lambda_, end_lambda_, step_lambda_, lightSrcSpectrum_)
 {
-    resetTransmissions();
-    resetTransTemp();
-    findLCLayerInMaterilList();
+    findLCLayerInMaterialList();
     ifCalcStokes = _ifStokes;
     if (ifCalcStokes)resetStokes();
 }
 
-void ExtendedJones::calculateExtendedJones(bool ifStokes = false){
+void ExtendedJones::calculateExtendedJones(){
+    //reset before calculation to be sure.
+    resetTransmissions();
+    resetTransTemp();
+    if (lambdas.size() == 0)
+        throw runtime_error("can't calculate extended jones matrix without any given wavelength");
+    //interpolate all NK data to target wavelengths
+    for (int i = 0; i < matLayers.size(); ++i)
+        matLayers[lcLayerindex]->interpolateNKForLambdas(lambdas);
 
+}
+
+void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
+    double lastn = 1.0;
+    double ts = 1.0, tp = 1.0;
+    double lambda = lambdas[iLambda];
+    for (int i = 0; i < inAngles.size(); ++i)
+        for(int j = 0; j < inAngles[i].size(); ++j){
+            JONESMAT M;
+            M << 1.0,0.0,0.0,1.0;
+
+        }
 }
 
 const TRANSRESULT& ExtendedJones::getTransmissions(){
@@ -75,7 +91,4 @@ void ExtendedJones::resetToCalculateWithNewDiretors(DIRVEC _in){
             Optical2X2OneLayerBase>(matLayers[lcLayerindex]);
         if (tempLayerPtr) tempLayerPtr->resetDirectors(_in);
     }
-    resetTransmissions();
-    resetTransTemp();
-    resetStokes();
 }

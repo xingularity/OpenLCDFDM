@@ -36,14 +36,22 @@ namespace LCD1D{
         ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
         const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifStokes=false);
         ///main function to calculate extended Jones.
-        void calculateExtendedJones(bool ifStokes = false);
+        void calculateExtendedJones();
         ///return the transmission results
         const TRANSRESULT& getTransmissions();
         ///return the results of stokes values
         const STOKESRESULT& getStokes();
         ///reset directors in materials and the states of computing components to calculate optics based on input directors.
         void resetToCalculateWithNewDiretors(DIRVEC _in);
+        ///return if this object calculates stokes values
+        bool isCalcStokes()const {return ifCalcStokes;}
     private:
+        ///for single-wavelength calculation, no stokes calculation.
+        void calculateOneLambdaNoStokes(int iLambda);
+        ///for single-wavelength calculation and stokes calculation.
+        void calculateOneLambdaWithStokes(int iLambda);
+        ///for multi-wavelength calculation
+        void calculateManyLambda();
         void resetTransmissions();
         void resetTransTemp();
         void resetStokes();

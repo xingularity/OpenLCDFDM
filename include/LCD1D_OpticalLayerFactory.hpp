@@ -16,8 +16,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef LCD1D_LAYERFACTORY_HPP
-#define LCD1D_LAYERFACTORY_HPP
+#ifndef LCD1D_OPTICALLAYERFACTORY_HPP
+#define LCD1D_OPTICALLAYERFACTORY_HPP
 
 #include "LCD_Optics2x2.hpp"
 

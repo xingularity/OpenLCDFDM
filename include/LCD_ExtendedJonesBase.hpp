@@ -129,6 +129,7 @@ namespace LCDOptics{
                 std::cout << "Can't calculate optics without an layer of optical material." << std::endl;
                 assert(false);
             }
+            checkPolazerLayers();
         }
         ///For multiwavelengths calculation
         ExtendedJonesBase(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
@@ -150,6 +151,7 @@ namespace LCDOptics{
             SpectrumInterpolator<LIGHTSPECTRUMDATA> interpolator(lambdas);
             interpolator.interpolate(SpectrumEfficiency, yBarOfLambda);
             interpolator.interpolate(lightSrcSpectrum_, lightSourceSpectrum);
+            checkPolazerLayers();
         }
 
         const int getLCLayerIndex(){return lcLayerindex;}
@@ -165,13 +167,21 @@ namespace LCDOptics{
             for (int i = 0; i < matLayers.size(); ++i){
                 Optical2X2OneLayer<UniaxialType>* sp = dynamic_cast<Optical2X2OneLayer<UniaxialType>*> (matLayers[i].get());
                 if (sp == NULL) continue;
-                if (sp->ifLCLayer()) {
+                if (sp->opticalLayerKind() == OpticalMaterialClass::LCMATERIAL) {
                     lcLayerindex = i;
                     break;
                 }
             }
         }
-
+         ///Stokes calculation needs to know the positions of polarizer layer.
+        void checkPolazerLayers(){
+            for (int i = 0; i < matLayers.size(); ++i)
+                if (matLayers[i]->opticalLayerKind() == OpticalMaterialClass::POLARIZER){
+                    polarizerLayersIndex.push_back(i);
+                }
+        }
+         ///If LC layer is sandwiched between 2 polarizer layers with the theta angles of their optical axis equal to 90 or 270 degree, the stokes value can be calculated.
+        void checkIfCalcStokes();
         ///Incident angles which will be calculated.
         const IAngles inAngles;
         ///material list
@@ -187,6 +197,7 @@ namespace LCDOptics{
         ///refractive index of the air
         const double nAir{1.000293};
         int lcLayerindex{-1};
+        std::vector<size_t> polarizerLayersIndex;
     };
 };
 

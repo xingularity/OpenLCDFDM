@@ -26,20 +26,33 @@ namespace LCDOptics{
     using LCD::EigenM22;
     using Eigen::Vector3d;
     using POLARTRACE = std::vector<Eigen::Vector2cd>;
+    using Optical2x2BasePtr = std::shared_ptr<Optical2X2OneLayerBase>;
+    using Optical2x2IsoPtr = std::shared_ptr<ISOType>;
+    using Optical2x2UnixialPtr = std::shared_ptr<UniaxialType>;
     ///Jones matrix is a 2x2 matrix.
     typedef EigenC22 JONESMAT;
+    enum class OpticalMaterialClass{
+        GLASS = 0,
+        ISOTROPIC = 1,
+        UNIAXIAL = 2,
+        LCMATERIAL = 3,
+        POLARIZER = 4,
+        BIAXIAL = 5
+    };
 
     /**
     Optical2X2OneLayerBase represents base class of one layer of material when calculating 2X2 extended Jones matrix.<br/>
     */
     class Optical2X2OneLayerBase{
     public:
-        Optical2X2OneLayerBase(){}
+        Optical2X2OneLayerBase(OpticalMaterialClass _layerMaterialClass){layerMaterialClass = _layerMaterialClass;}
         ///calculate one jones matrix and return its average refractive index and incident angles
         virtual double calcJonesMatrix(JONESMAT& m, Angle& iang, double lambda, double lastn) = 0;
         ///calculate one jones matrix and light polarization, return the average refractive index and incident angles
         virtual double calcJonesMatrix(JONESMAT& m, POLARTRACE& lightPolar, Angle& iang, double lambda, double lastn) = 0;
         virtual void interpolateNKForLambdas(DOUBLEARRAY1D lambdas_) = 0;
+        OpticalMaterialClass opticalLayerKind(){return layerMaterialClass;}
+        const DIRVEC getAxes(){return axisVec;}
     protected:
         ///calculate polarizations based on input Jones matrix
         void calculatePolarization(const JONESMAT& m, POLARTRACE& lightPolar){
@@ -55,6 +68,7 @@ namespace LCDOptics{
         size_t layernum;
         ///data of optical axis
         DIRVEC axisVec;
+        OpticalMaterialClass layerMaterialClass;
     };
 
     template<int E>
@@ -68,7 +82,7 @@ namespace LCDOptics{
     class Optical2X2OneLayer<ISOType>: public Optical2X2OneLayerBase{
     public:
         ///For isotropic material.
-        Optical2X2OneLayer(double thickness, NKData _nk);
+        Optical2X2OneLayer(double thickness, NKData _nk, OpticalMaterialClass _layerMaterialClass = OpticalMaterialClass::ISOTROPIC);
         ///calculate one jones matrix and return its average refractive index and incident angles
         virtual double calcJonesMatrix(JONESMAT& m, Angle& iang, double lambda, double lastn);
         ///calculate one jones matrix and light polarization, return the average refractive index and incident angles
@@ -83,7 +97,8 @@ namespace LCDOptics{
         SpectrumInterpolator<NKData> nkInterpolator;
     };
 
-    Optical2X2OneLayer<ISOType>::Optical2X2OneLayer(double thickness, NKData _nk){
+    Optical2X2OneLayer<ISOType>::Optical2X2OneLayer(double thickness, NKData _nk, OpticalMaterialClass _layerMaterialClass):
+    Optical2X2OneLayerBase(_layerMaterialClass){
         materialtype = ISOType;
         this->d = thickness;
         nk = _nk;
@@ -149,14 +164,13 @@ namespace LCDOptics{
     class Optical2X2OneLayer<UniaxialType>: public Optical2X2OneLayerBase{
     public:
         ///For uniaxial material.
-        Optical2X2OneLayer(double thickness, NKoNKeData _nk, bool isLCLayer_=false);
+        Optical2X2OneLayer(double thickness, NKoNKeData _nk, OpticalMaterialClass _layerMaterialClass = OpticalMaterialClass::UNIAXIAL);
         void resetDirectors(DIRVEC _in);
         ///calculate one jones matrix and return its average refractive index and incident angles
         virtual double calcJonesMatrix(JONESMAT& m, Angle& iang, double lambda, double lastn);
         ///calculate one jones matrix and light polarization, return the average refractive index and incident angles
         virtual double calcJonesMatrix(JONESMAT& m, POLARTRACE& lightPolar, Angle& iang, double lambda, double lastn);
         virtual void interpolateNKForLambdas(DOUBLEARRAY1D lambdas_);
-        bool ifLCLayer(){return isLCLayer;}
     private:
         ///find nk for corresponding lambda. If find in map, then return. Otherwise, interpolate immediately
         NKoNKe findNK(double lambda);
@@ -164,11 +178,10 @@ namespace LCDOptics{
         NKoNKeData nk;
         ///Interpolation of nk distribution
         SpectrumInterpolator<NKoNKeData> nkInterpolator;
-        bool isLCLayer{false};
     };
 
-    Optical2X2OneLayer<UniaxialType>::Optical2X2OneLayer(double thickness, NKoNKeData _nk, bool isLCLayer_){
-        isLCLayer = isLCLayer_;
+    Optical2X2OneLayer<UniaxialType>::Optical2X2OneLayer(double thickness, NKoNKeData _nk, OpticalMaterialClass _layerMaterialClass):
+    Optical2X2OneLayerBase(_layerMaterialClass){
         materialtype = UniaxialType;
         this->d = thickness;
         nk = _nk;
@@ -360,7 +373,7 @@ namespace LCDOptics{
 
     void Optical2X2OneLayer<UniaxialType>::resetDirectors(DIRVEC _in){
         layernum = _in.size();
-        axisVec = _in;f
+        axisVec = _in;
     }
 };
 

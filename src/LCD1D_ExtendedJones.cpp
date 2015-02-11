@@ -24,7 +24,7 @@ ExtendedJones::ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _i
 ExtendedJonesBase(_materials, _inAngles, targetLambda, lightSrcSpectrum_)
 {
     findLCLayerInMaterialList();
-    ifCalcStokes = _ifStokes;
+    if (_ifStokes)checkIfCalcStokes();
     if (ifCalcStokes)resetStokes();
 }
 
@@ -33,8 +33,32 @@ const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcS
 ExtendedJonesBase(_materials, _inAngles, start_lambda_, end_lambda_, step_lambda_, lightSrcSpectrum_)
 {
     findLCLayerInMaterialList();
-    ifCalcStokes = _ifStokes;
+    if (_ifStokes)checkIfCalcStokes();
     if (ifCalcStokes)resetStokes();
+}
+
+void ExtendedJones::checkIfCalcStokes(){
+    ifCalcStokes = false;
+    //There must be at least one polarizer layer.
+    //check number of polarizers first
+    if (polarizerLayersIndex.size() < 1){
+        std::cout << "Number of the polarizer layer < 1, no Stokes calculation" << std::endl;
+        return;
+    }
+    int index = polarizerLayersIndex[0];
+    std::shared_ptr<Optical2X2OneLayer<UniaxialType> > tempLayerPtr;
+    tempLayerPtr = std::dynamic_pointer_cast<Optical2X2OneLayer<UniaxialType>,Optical2X2OneLayerBase>(matLayers[index]);
+    if (!tempLayerPtr) throw runtime_error("error type conversion while trying to find optical axis of the first polarizers.");
+    DIRVEC axes = tempLayerPtr -> getAxes();
+    //polarizer's optical axis should have almost 90 degree angle
+    BzVECD3D axis = axes(0);
+    if ((std::abs(acos(axis(2))) - M_PI/2.0) > 1.0e-10) && ((std::abs(acos(axis(2))) - 3.0*M_PI/2.0) > 1.0e-10){
+        std::cout << "The axis of the first polarizer doesn't approach to 90 or 270 angle." << std::endl;
+        return;
+    }
+    std::cout << "Stokes calculation will be used." <<std::endl;
+    ifCalcStokes = true;
+    return;
 }
 
 void ExtendedJones::calculateExtendedJones(){
@@ -57,6 +81,9 @@ void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
         for(int j = 0; j < inAngles[i].size(); ++j){
             JONESMAT M;
             M << 1.0,0.0,0.0,1.0;
+            Angle inAngle = inAngles[i][j];
+            for (int k =0; k < matLayerNum; k++)
+                lastn = matLayers.calcJonesMatrix(M, inAngle, lambda, lastn);
 
         }
 }

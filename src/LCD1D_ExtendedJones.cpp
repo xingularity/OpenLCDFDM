@@ -123,6 +123,7 @@ void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
 
 void ExtendedJones::calculateOneLambdaWithStokes(int iLambda){
     //If the program comes here, it means there is at least one polarizer and its theta angle approaches to 90 or 270 degree.
+
 }
 
 const TRANSRESULT& ExtendedJones::getTransmissions(){

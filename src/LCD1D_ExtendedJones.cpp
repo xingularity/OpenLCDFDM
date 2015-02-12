@@ -109,20 +109,20 @@ void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
             for (int k =0; k < matLayerNum; k++)
                 lastn = matLayers.calcJonesMatrix(M, inAngle, lambda, lastn);
                 const double& theta_i = std::get<0>(inAngle);
-                  //refraction angle
-                double theta_r = std::asin(lastn*sin(theta_i)/nAir);
+                  //refraction back to air
+                const double& theta_r = std::get<0>(inAngles[i][j]);
                 EigenM22 tMat;
                 tMat << (2.0*lastn*cos(theta_i)/(lastn*cos(theta_i)+nAvg*cos(theta_r))),0,0,
                         (2.0*lastn*cos(theta_i)/(lastn*cos(theta_r)+nAvg*cos(theta_i)));
                 M=tMat*M;
-                  //put into transTemp first
+                  //put tramissions into transTemp first
                 transTemp[i][j]=0.5*(pow(std::abs(M(0,0)),2.0)+pow(std::abs(M(0,1)),2.0)
                 +pow(std::abs(M(1,0)),2.0)+pow(std::abs(M(1,1)),2.0));
         }
 }
 
 void ExtendedJones::calculateOneLambdaWithStokes(int iLambda){
-    
+    //If the program comes here, it means there is at least one polarizer and its theta angle approaches to 90 or 270 degree.
 }
 
 const TRANSRESULT& ExtendedJones::getTransmissions(){

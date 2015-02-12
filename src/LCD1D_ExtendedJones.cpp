@@ -70,11 +70,35 @@ void ExtendedJones::calculateExtendedJones(){
     //interpolate all NK data to target wavelengths
     for (int i = 0; i < matLayers.size(); ++i)
         matLayers[lcLayerindex]->interpolateNKForLambdas(lambdas);
+    if (ifCalcStokes){
 
+    }else{
+        if (lambdas.size() == 1){
+            calculateOneLambdaNoStokes(0);
+            transmissions = transTemp;
+        }
+        else{
+            double denominator = 0.0;
+            double step_lambda = lambdas[1] - lambdas[0];
+            for (int i =0; i < lightSourceSpectrum.size(); ++i)
+                denominator += lightSourceSpectrum[i] * spectralEfficiency[i] * step_lambda;
+            for (int i = 0; i < lambdas.size()){
+                calculateOneLambdaNoStokes(i);
+                for(int j = 0; j < transmissions.size(); ++j)
+                    for(int k = 0; k < transmissions.size(); ++k)
+                        transmissions[j][k] += transTemp[j][k] * lightSourceSpectrum[i] * spectralEfficiency[i] * step_lambda;
+
+            }
+            for(int i = 0; i < transmissions.size(); ++i)
+                for(int j = 0; j < transmissions.size(); ++j)
+                    transmissions[i][j]/=denominator;
+        }
+    }
 }
 
 void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
-    double lastn = 1.0;
+    //assuming incident from air
+    double lastn = nAir;
     double ts = 1.0, tp = 1.0;
     double lambda = lambdas[iLambda];
     for (int i = 0; i < inAngles.size(); ++i)
@@ -84,8 +108,21 @@ void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
             Angle inAngle = inAngles[i][j];
             for (int k =0; k < matLayerNum; k++)
                 lastn = matLayers.calcJonesMatrix(M, inAngle, lambda, lastn);
-
+                const double& theta_i = std::get<0>(inAngle);
+                  //refraction angle
+                double theta_r = std::asin(lastn*sin(theta_i)/nAir);
+                EigenM22 tMat;
+                tMat << (2.0*lastn*cos(theta_i)/(lastn*cos(theta_i)+nAvg*cos(theta_r))),0,0,
+                        (2.0*lastn*cos(theta_i)/(lastn*cos(theta_r)+nAvg*cos(theta_i)));
+                M=tMat*M;
+                  //put into transTemp first
+                transTemp[i][j]=0.5*(pow(std::abs(M(0,0)),2.0)+pow(std::abs(M(0,1)),2.0)
+                +pow(std::abs(M(1,0)),2.0)+pow(std::abs(M(1,1)),2.0));
         }
+}
+
+void ExtendedJones::calculateOneLambdaWithStokes(int iLambda){
+    
 }
 
 const TRANSRESULT& ExtendedJones::getTransmissions(){
@@ -102,7 +139,6 @@ void ExtendedJones::resetTransmissions(){
 }
 void ExtendedJones::resetTransTemp(){
     transTemp.clear();
-    if (lambdas.size() < 2) return;
     transTemp = DOUBLEARRAY2D(_inAngles.size(), DOUBLEARRAY1D(_inAngles[0].size(), 0.0));
 }
 void ExtendedJones::resetStokes(){

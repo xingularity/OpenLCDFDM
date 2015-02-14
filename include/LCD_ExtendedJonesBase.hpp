@@ -25,6 +25,9 @@
 
 namespace LCDOptics{
     using LCD::DOUBLEARRAY2D;
+    using Optical2x2BasePtr = std::shared_ptr<Optical2X2OneLayerBase>;
+    using Optical2x2IsoPtr = std::shared_ptr<Optical2X2OneLayer<ISOType> >;
+    using Optical2x2UnixialPtr = std::shared_ptr<Optical2X2OneLayer<UniaxialType> >;
     ///container of all optical materials, in the same order of passing through a ray
     typedef std::vector<std::shared_ptr<Optical2X2OneLayerBase> > MATERIALLAYERS2X2CONT;
     ///spectral efficiency of human eyes, get yBar of lambda from CIE web site.
@@ -167,7 +170,7 @@ namespace LCDOptics{
             for (int i = 0; i < matLayers.size(); ++i){
                 Optical2X2OneLayer<UniaxialType>* sp = dynamic_cast<Optical2X2OneLayer<UniaxialType>*> (matLayers[i].get());
                 if (sp == NULL) continue;
-                if (sp->opticalLayerKind() == OpticalMaterialClass::LCMATERIAL) {
+                if (sp->opticalLayerKind() == OPT_LCMATERIAL) {
                     lcLayerindex = i;
                     break;
                 }
@@ -176,7 +179,7 @@ namespace LCDOptics{
          ///Stokes calculation needs to know the positions of polarizer layer.
         void checkPolazerLayers(){
             for (int i = 0; i < matLayers.size(); ++i)
-                if (matLayers[i]->opticalLayerKind() == OpticalMaterialClass::POLARIZER){
+                if (matLayers[i]->opticalLayerKind() == OPT_POLARIZER){
                     polarizerLayersIndex.push_back(i);
                 }
         }

@@ -26,18 +26,15 @@ namespace LCDOptics{
     using LCD::EigenM22;
     using Eigen::Vector3d;
     using POLARTRACE = std::vector<Eigen::Vector2cd>;
-    using Optical2x2BasePtr = std::shared_ptr<Optical2X2OneLayerBase>;
-    using Optical2x2IsoPtr = std::shared_ptr<ISOType>;
-    using Optical2x2UnixialPtr = std::shared_ptr<UniaxialType>;
     ///Jones matrix is a 2x2 matrix.
     typedef EigenC22 JONESMAT;
-    enum class OpticalMaterialClass{
-        GLASS = 0,
-        ISOTROPIC = 1,
-        UNIAXIAL = 2,
-        LCMATERIAL = 3,
-        POLARIZER = 4,
-        BIAXIAL = 5
+    enum OpticalMaterialClass{
+        OPT_GLASS = 0,
+        OPT_ISOTROPIC = 1,
+        OPT_UNIAXIAL = 2,
+        OPT_LCMATERIAL = 3,
+        OPT_POLARIZER = 4,
+        OPT_BIAXIAL = 5
     };
 
     /**
@@ -56,14 +53,14 @@ namespace LCDOptics{
     protected:
         ///calculate polarizations based on input Jones matrix
         void calculatePolarization(const EigenC22& m, POLARTRACE& lightPolar){
-            if (lightPolar.size() = 0) return;
+            if (lightPolar.size() == 0) return;
             Eigen::Vector2cd polar = lightPolar.back();
             polar = m*polar;
             lightPolar.push_back(polar);
         }
         ///calculate polarizations based on input Jones matrix
         void calculatePolarization(const EigenM22& m, POLARTRACE& lightPolar){
-            if (lightPolar.size() = 0) return;
+            if (lightPolar.size() == 0) return;
             Eigen::Vector2cd polar = lightPolar.back();
             polar = m*polar;
             lightPolar.push_back(polar);
@@ -90,7 +87,7 @@ namespace LCDOptics{
     class Optical2X2OneLayer<ISOType>: public Optical2X2OneLayerBase{
     public:
         ///For isotropic material.
-        Optical2X2OneLayer(double thickness, NKData _nk, OpticalMaterialClass _layerMaterialClass = OpticalMaterialClass::ISOTROPIC);
+        Optical2X2OneLayer(double thickness, NKData _nk, OpticalMaterialClass _layerMaterialClass = OPT_ISOTROPIC);
         ///calculate one jones matrix and return its average refractive index and incident angles
         virtual double calcJonesMatrix(JONESMAT& m, Angle& iang, double lambda, double lastn);
         ///calculate one jones matrix and light polarization, return the average refractive index and incident angles
@@ -172,7 +169,7 @@ namespace LCDOptics{
     class Optical2X2OneLayer<UniaxialType>: public Optical2X2OneLayerBase{
     public:
         ///For uniaxial material.
-        Optical2X2OneLayer(double thickness, NKoNKeData _nk, OpticalMaterialClass _layerMaterialClass = OpticalMaterialClass::UNIAXIAL);
+        Optical2X2OneLayer(double thickness, NKoNKeData _nk, OpticalMaterialClass _layerMaterialClass = OPT_UNIAXIAL);
         void resetDirectors(DIRVEC _in);
         ///calculate one jones matrix and return its average refractive index and incident angles
         virtual double calcJonesMatrix(JONESMAT& m, Angle& iang, double lambda, double lastn);
@@ -375,7 +372,7 @@ namespace LCDOptics{
         EigenM22 eo_sp;
         eo_sp << e.dot(s), o.dot(s), e.dot(p), o.dot(p);
         M=eo_sp*M;
-        if ((lightPolar.size() == 0) && (layerMaterialClass==OpticalMaterialClass::POLARIZER)){
+        if ((lightPolar.size() == 0) && (layerMaterialClass==OPT_POLARIZER)){
             //This layer is a polarizer and no stokes has been calculated yet. Then, this is the first layer to calculate Stokes.
             Eigen::Vector2cd polar;
             if (ne.imag() < no.imag()){

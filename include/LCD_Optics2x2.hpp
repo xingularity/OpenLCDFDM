@@ -77,7 +77,9 @@ namespace LCDOptics{
     };
 
     template<int E>
-    class Optical2X2OneLayer: public std::false_type{};
+    class Optical2X2OneLayer: public Optical2X2OneLayerBase{
+        Optical2X2OneLayer(){throw runtime_error("Can't use this Optical2X2OneLayer");}
+    };
 
     /**
     Optical2X2IsotropicLayer represents base class of one layer of isotropic material when calculating 2X2 extended Jones matrix.<br/>

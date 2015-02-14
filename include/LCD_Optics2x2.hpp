@@ -55,7 +55,15 @@ namespace LCDOptics{
         const DIRVEC getAxes(){return axisVec;}
     protected:
         ///calculate polarizations based on input Jones matrix
-        void calculatePolarization(const JONESMAT& m, POLARTRACE& lightPolar){
+        void calculatePolarization(const EigenC22& m, POLARTRACE& lightPolar){
+            if (lightPolar.size() = 0) return;
+            Eigen::Vector2cd polar = lightPolar.back();
+            polar = m*polar;
+            lightPolar.push_back(polar);
+        }
+        ///calculate polarizations based on input Jones matrix
+        void calculatePolarization(const EigenM22& m, POLARTRACE& lightPolar){
+            if (lightPolar.size() = 0) return;
             Eigen::Vector2cd polar = lightPolar.back();
             polar = m*polar;
             lightPolar.push_back(polar);
@@ -149,7 +157,7 @@ namespace LCDOptics{
         tMat(0,0)=ts;tMat(1,1)=tp;
         M=tMat*M;
         //calculate light polarization
-        calculatePolarization(M, lightPolar);
+        calculatePolarization(tMat, lightPolar);
 
         std::get<0>(iang)=theta_r;
         return nAvg;
@@ -306,7 +314,7 @@ namespace LCDOptics{
         //Multiply ts tp matrix. M is now going into the zero thickness imaginary layer
         M=tMat*M;
         //calculate light polarization
-        calculatePolarization(M, lightPolar);
+        calculatePolarization(tMat, lightPolar);
 
         Vector3d zz; zz <<0.0,0.0,1.0;
         Vector3d kr; kr << sin(theta_r)*cos(phi), sin(theta_r)*sin(phi), cos(theta_r);
@@ -326,7 +334,7 @@ namespace LCDOptics{
         sp_eo << s.dot(e), p.dot(e), s.dot(o), p.dot(o);
         //convert sp coordinate to eo coordinate.
         M=sp_eo*M;
-        calculatePolarization(M, lightPolar);
+        calculatePolarization(sp_eo, lightPolar);
         double ld=d/layernum;
         double angle[2]; //temp array for theta and phi of one axis
         for (int i=0; i< layernum;i++){
@@ -344,21 +352,22 @@ namespace LCDOptics{
             COMPD kez=(v+sqrt(v*v-4.0*u*w))/2.0/u;
             COMPD koz=sqrt(no*no*(2.0*M_PI/lambda)*(2.0*M_PI/lambda)-alpha*alpha-beta*beta);
 
-            M(0,0)*=exp(COMPD(0.0,-1.0)*kez*ld);
-            M(0,1)*=exp(COMPD(0.0,-1.0)*kez*ld);
-            M(1,0)*=exp(COMPD(0.0,-1.0)*koz*ld);
-            M(1,1)*=exp(COMPD(0.0,-1.0)*koz*ld);
+            EigenC22 phaseMatrix;
+            phaseMatrix << exp(COMPD(0.0,-1.0)*kez*ld), exp(COMPD(0.0,-1.0)*kez*ld), exp(COMPD(0.0,-1.0)*koz*ld), exp(COMPD(0.0,-1.0)*koz*ld);
+            M(0,0)*=phaseMatrix(0,0);
+            M(0,1)*=phaseMatrix(0,1);
+            M(1,0)*=phaseMatrix(1,0);
+            M(1,1)*=phaseMatrix(1,1);
             //calculate light polarization
-            calculatePolarization(M, lightPolar);
-
+            calculatePolarization(phaseMatrix, lightPolar);
             if (i<layernum-1){
                 caxis_temp << axisVec(i+1)(0), axisVec(i+1)(1), axisVec(i+1)(2);
                 Vector3d o1=kr.cross(caxis_temp);o1.normalize();
                 Vector3d e1=o1.cross(kr);e1.normalize();
-                EigenM22 eo_trans;
+                EigenC22 eo_trans;
                 eo_trans << e.dot(e1), o.dot(e1), e.dot(o1), o.dot(o1);
                 M=eo_trans*M;
-                calculatePolarization(M, lightPolar);
+                calculatePolarization(eo_trans, lightPolar);
                 o=o1;e=e1;
             }
         }
@@ -366,7 +375,22 @@ namespace LCDOptics{
         EigenM22 eo_sp;
         eo_sp << e.dot(s), o.dot(s), e.dot(p), o.dot(p);
         M=eo_sp*M;
-        calculatePolarization(M, lightPolar);
+        if ((lightPolar.size() == 0) && (layerMaterialClass==OpticalMaterialClass::POLARIZER)){
+            //This layer is a polarizer and no stokes has been calculated yet. Then, this is the first layer to calculate Stokes.
+            Eigen::Vector2cd polar;
+            if (ne.imag() < no.imag()){
+                //Extraordinary light has been perfectly absorped.
+                polar<< 0.0, 1.0;
+            }
+            else{
+                //Ordinary light has been perfectly absorped.
+                polar << 1.0, 0.0;
+            }
+            //get incident polariation
+            polar = eo_sp*polar;
+            lightPolar.push_back(polar);
+        }
+        calculatePolarization(eo_sp, lightPolar);
         std::get<0>(iang)=theta_r;
         return nAvg;
     }

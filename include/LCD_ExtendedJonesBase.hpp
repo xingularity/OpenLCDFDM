@@ -197,7 +197,7 @@ namespace LCDOptics{
         ///refractive index of the air
         const double nAir{1.000293};
         int lcLayerindex{-1};
-        std::vector<size_t> polarizerLayersIndex;
+        std::vector<unsigned int> polarizerLayersIndex;
     };
 };
 

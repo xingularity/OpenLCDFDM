@@ -15,7 +15,9 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+
 #include "LCD1D_ExtendedJones.hpp"
+#include <algorithm>
 #include <typeinfo>
 
 using namespace LCD1D;
@@ -45,6 +47,7 @@ void ExtendedJones::checkIfCalcStokes(){
         std::cout << "Number of the polarizer layer < 1, no Stokes calculation" << std::endl;
         return;
     }
+    /*
     int index = polarizerLayersIndex[0];
     std::shared_ptr<Optical2X2OneLayer<UniaxialType> > tempLayerPtr;
     tempLayerPtr = std::dynamic_pointer_cast<Optical2X2OneLayer<UniaxialType>,Optical2X2OneLayerBase>(matLayers[index]);
@@ -56,6 +59,7 @@ void ExtendedJones::checkIfCalcStokes(){
         std::cout << "The axis of the first polarizer doesn't approach to 90 or 270 angle." << std::endl;
         return;
     }
+    */
     std::cout << "Stokes calculation will be used." <<std::endl;
     ifCalcStokes = true;
     return;
@@ -66,12 +70,12 @@ void ExtendedJones::calculateExtendedJones(){
     resetTransmissions();
     resetTransTemp();
     if (lambdas.size() == 0)
-        throw runtime_error("can't calculate extended jones matrix without any given wavelength");
+        throw runtime_error("can't calculate extended Jones matrix without any given wavelength");
     //interpolate all NK data to target wavelengths
     for (int i = 0; i < matLayers.size(); ++i)
         matLayers[lcLayerindex]->interpolateNKForLambdas(lambdas);
     if (ifCalcStokes){
-
+        resetStokes();
     }else{
         if (lambdas.size() == 1){
             calculateOneLambdaNoStokes(0);
@@ -123,7 +127,52 @@ void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
 
 void ExtendedJones::calculateOneLambdaWithStokes(int iLambda){
     //If the program comes here, it means there is at least one polarizer and its theta angle approaches to 90 or 270 degree.
+    //assuming incident from air
+    double lastn = nAir;
+    double ts = 1.0, tp = 1.0;
+    double lambda = lambdas[iLambda];
+    unsigned int polarCalcStart = std::min_element(polarizerLayersIndex.begin(), polarizerLayersIndex.end());
+    //polarCalcEnd points to the next layer of the final polarizer.
+    unsigned int polarCalcEnd = (polarizerLayersIndex.size() > 1) ? std::max_element(polarizerLayersIndex.begin(), polarizerLayersIndex.end()) + 1, matLayerNum;
+    for (int i = 0; i < inAngles.size(); ++i)
+        for(int j = 0; j < inAngles[i].size(); ++j){
+            JONESMAT M;
+            M << 1.0,0.0,0.0,1.0;
+            Angle inAngle = inAngles[i][j];
+            POLARTRACE lightPolar(0); //no elements at init
+            for (int k =0; k < matLayerNum; k++){
+                if ((k >= polarCalcStart) && (k < polarCalcEnd))
+                    lastn = matLayers.calcJonesMatrix(M, lightPolar, inAngle, lambda, lastn);
+                else
+                    lastn = matLayers.calcJonesMatrix(M, inAngle, lambda, lastn);
+            }
+            const double& theta_i = std::get<0>(inAngle);
+              //refraction back to air
+            const double& theta_r = std::get<0>(inAngles[i][j]);
+            EigenM22 tMat;
+            tMat << (2.0*lastn*cos(theta_i)/(lastn*cos(theta_i)+nAvg*cos(theta_r))),0,0,
+                    (2.0*lastn*cos(theta_i)/(lastn*cos(theta_r)+nAvg*cos(theta_i)));
+            M=tMat*M;
+              //put tramissions into transTemp first
+            transTemp[i][j]=0.5*(pow(std::abs(M(0,0)),2.0)+pow(std::abs(M(0,1)),2.0)
+            +pow(std::abs(M(1,0)),2.0)+pow(std::abs(M(1,1)),2.0));
 
+            Eigen::Vector2cd polar = lightPolar.back();
+            polar = tMat*polar;
+            lightPolar.push_back(polar);
+
+            //start to convert polarization to Stokes vector with assumtion that s0 = 1
+            STOKESTRACE stokesTrace;
+            for (unsigned int k =0; k < lightPolar.size(); ++k){
+                Eigen::Vector2cd polar = lightPolar[k];
+                Eigen::Vector3d stokeVector;
+                double psi = std::atan2(polar[1].real(), polar[0].real());
+                double delta = std::arg(polar[1] / polar[0]);
+                stokeVector << std::cos(2.0*psi), std::sin(2.0*psi)*std::cos(delta), std::sin(2.0*psi)*std::sin(delta);
+                stokesTrace.push_back(stokeVector);
+            }
+            stokes[iLambda][i][j] = stokesTrace;
+        }
 }
 
 const TRANSRESULT& ExtendedJones::getTransmissions(){
@@ -138,6 +187,7 @@ void ExtendedJones::resetTransmissions(){
     transmissions.clear();
     transmissions = DOUBLEARRAY2D(_inAngles.size(), DOUBLEARRAY1D(_inAngles[0].size(), 0.0));
 }
+
 void ExtendedJones::resetTransTemp(){
     transTemp.clear();
     transTemp = DOUBLEARRAY2D(_inAngles.size(), DOUBLEARRAY1D(_inAngles[0].size(), 0.0));

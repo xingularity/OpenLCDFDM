@@ -19,6 +19,7 @@
 #include <iostream>
 #include <fstream>
 #include "../../include/LCD1D_ExtendedJones.hpp"
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace LCDOptics;
@@ -30,12 +31,15 @@ NKData ReadIsotropicNKData(std::string _filename){
     fstream file;
     file.open(_filename.c_str(),fstream::in);
     string line;
-    while(!file){
-        stringstream ss;
-        ss << file;
+    while(getline(file, line)){
         double lambda, n, k;
-        ss >> lambda, n, k;
+        stringstream ss;
+        ss << line;
+        ss >> lambda;
+        ss >> n;
+        ss >> k;
         nkSpectrum[lambda] = COMPD(n,k);
+        std::cout << lambda << ", " << nkSpectrum[lambda] << std::endl;
     }
     return nkSpectrum;
 }

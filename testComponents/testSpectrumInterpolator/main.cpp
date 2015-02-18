@@ -50,7 +50,7 @@ int main(int argc, const char *argv[])
     lambdas.push_back(0.81);
 
     //This line is to test static assert.
-    SpectrumInterpolator<std::map<COMPD, double> > testStaticAssert(lambdas);
+    //SpectrumInterpolator<std::map<COMPD, double> > testStaticAssert(lambdas);
 
     SpectrumInterpolator<LIGHTSPECTRUMDATA> lightInterp(lambdas);
     std::vector<LIGHTSPECTRUMDATA::value_type::second_type> lightOut;

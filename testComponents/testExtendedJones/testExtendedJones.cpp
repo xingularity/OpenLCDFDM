@@ -19,7 +19,7 @@
 #include <iostream>
 #include <fstream>
 #include "../../include/LCD1D_ExtendedJones.hpp"
-#include <boost/algorithm/string.hpp>
+#include "../../include/LCD_UsefulFuncs.hpp"
 
 using namespace std;
 using namespace LCDOptics;
@@ -33,13 +33,15 @@ NKData ReadIsotropicNKData(std::string _filename){
     string line;
     while(getline(file, line)){
         double lambda, n, k;
-        stringstream ss;
-        ss << line;
-        ss >> lambda;
-        ss >> n;
-        ss >> k;
+        std::string temp;
+        stringstream ss(line);
+        getline(ss, temp, ',');
+        lambda = strToNumeric<double>(temp);
+        getline(ss, temp, ',');
+        n = strToNumeric<double>(temp);
+        getline(ss, temp, ',');
+        k = strToNumeric<double>(temp);
         nkSpectrum[lambda] = COMPD(n,k);
-        std::cout << lambda << ", " << nkSpectrum[lambda] << std::endl;
     }
     return nkSpectrum;
 }
@@ -47,9 +49,12 @@ NKData ReadIsotropicNKData(std::string _filename){
 void testSingleGlass(){
     std::cout << "Start to calculate single glass case..." << std::endl;
     NKData nkSpectrum = ReadIsotropicNKData("GlassNKSpectrum.csv");
+    /*
     for (auto i : nkSpectrum){
         std:: cout << i.first << ", " << i.second << std::endl;
     }
+    */
+    
 }
 
 int main(int argc, char const *argv[]) {

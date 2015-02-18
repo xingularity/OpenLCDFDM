@@ -183,8 +183,6 @@ namespace LCDOptics{
                     polarizerLayersIndex.push_back(i);
                 }
         }
-         ///If LC layer is sandwiched between 2 polarizer layers with the theta angles of their optical axis equal to 90 or 270 degree, the stokes value can be calculated.
-        void checkIfCalcStokes();
         ///Incident angles which will be calculated.
         const IAngles inAngles;
         ///material list

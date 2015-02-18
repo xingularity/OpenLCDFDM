@@ -17,6 +17,7 @@
  */
 
 #include "LCD1D_ExtendedJones.hpp"
+#include <stdexcept>
 #include <algorithm>
 #include <typeinfo>
 
@@ -68,14 +69,14 @@ void ExtendedJones::checkIfCalcStokes(){
 void ExtendedJones::calculateExtendedJones(){
     //reset before calculation to be sure.
     resetTransmissions();
-    resetTransTemp();
     if (lambdas.size() == 0)
-        throw runtime_error("can't calculate extended Jones matrix without any given wavelength");
+        throw std::runtime_error("can't calculate extended Jones matrix without any given wavelength");
     //interpolate all NK data to target wavelengths
     for (int i = 0; i < matLayers.size(); ++i)
         matLayers[lcLayerindex]->interpolateNKForLambdas(lambdas);
     if (ifCalcStokes){
         resetStokes();
+        throw std::runtime_error("Not yet support Stokes in ExtendedJones::calculateExtendedJones()");
     }else{
         if (lambdas.size() == 1){
             calculateOneLambdaNoStokes(0);
@@ -85,12 +86,12 @@ void ExtendedJones::calculateExtendedJones(){
             double denominator = 0.0;
             double step_lambda = lambdas[1] - lambdas[0];
             for (int i =0; i < lightSourceSpectrum.size(); ++i)
-                denominator += lightSourceSpectrum[i] * spectralEfficiency[i] * step_lambda;
-            for (int i = 0; i < lambdas.size()){
+                denominator += lightSourceSpectrum[i] * yBarOfLambda[i] * step_lambda;
+            for (int i = 0; i < lambdas.size();++i){
                 calculateOneLambdaNoStokes(i);
                 for(int j = 0; j < transmissions.size(); ++j)
                     for(int k = 0; k < transmissions.size(); ++k)
-                        transmissions[j][k] += transTemp[j][k] * lightSourceSpectrum[i] * spectralEfficiency[i] * step_lambda;
+                        transmissions[j][k] += transTemp[j][k] * lightSourceSpectrum[i] * yBarOfLambda[i] * step_lambda;
 
             }
             for(int i = 0; i < transmissions.size(); ++i)
@@ -101,6 +102,7 @@ void ExtendedJones::calculateExtendedJones(){
 }
 
 void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
+    resetTransTemp();
     //assuming incident from air
     double lastn = nAir;
     double ts = 1.0, tp = 1.0;
@@ -111,13 +113,13 @@ void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
             M << 1.0,0.0,0.0,1.0;
             Angle inAngle = inAngles[i][j];
             for (int k =0; k < matLayerNum; k++)
-                lastn = matLayers.calcJonesMatrix(M, inAngle, lambda, lastn);
+                lastn = matLayers[k]->calcJonesMatrix(M, inAngle, lambda, lastn);
                 const double& theta_i = std::get<0>(inAngle);
                   //refraction back to air
                 const double& theta_r = std::get<0>(inAngles[i][j]);
-                EigenM22 tMat;
-                tMat << (2.0*lastn*cos(theta_i)/(lastn*cos(theta_i)+nAvg*cos(theta_r))),0,0,
-                        (2.0*lastn*cos(theta_i)/(lastn*cos(theta_r)+nAvg*cos(theta_i)));
+                LCDOptics::EigenM22 tMat;
+                tMat << (2.0*lastn*cos(theta_i)/(lastn*cos(theta_i)+nAir*cos(theta_r))),0,0,
+                        (2.0*lastn*cos(theta_i)/(lastn*cos(theta_r)+nAir*cos(theta_i)));
                 M=tMat*M;
                   //put tramissions into transTemp first
                 transTemp[i][j]=0.5*(pow(std::abs(M(0,0)),2.0)+pow(std::abs(M(0,1)),2.0)
@@ -128,12 +130,13 @@ void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
 void ExtendedJones::calculateOneLambdaWithStokes(int iLambda){
     //If the program comes here, it means there is at least one polarizer and its theta angle approaches to 90 or 270 degree.
     //assuming incident from air
+    resetTransTemp();
     double lastn = nAir;
     double ts = 1.0, tp = 1.0;
     double lambda = lambdas[iLambda];
-    unsigned int polarCalcStart = std::min_element(polarizerLayersIndex.begin(), polarizerLayersIndex.end());
+    unsigned int polarCalcStart = *(std::min_element(polarizerLayersIndex.begin(), polarizerLayersIndex.end()));
     //polarCalcEnd points to the next layer of the final polarizer.
-    unsigned int polarCalcEnd = (polarizerLayersIndex.size() > 1) ? std::max_element(polarizerLayersIndex.begin(), polarizerLayersIndex.end()) + 1, matLayerNum;
+    unsigned int polarCalcEnd = (polarizerLayersIndex.size() > 1) ? *(std::max_element(polarizerLayersIndex.begin(), polarizerLayersIndex.end())) + 1: matLayerNum;
     for (int i = 0; i < inAngles.size(); ++i)
         for(int j = 0; j < inAngles[i].size(); ++j){
             JONESMAT M;
@@ -142,16 +145,16 @@ void ExtendedJones::calculateOneLambdaWithStokes(int iLambda){
             POLARTRACE lightPolar(0); //no elements at init
             for (int k =0; k < matLayerNum; k++){
                 if ((k >= polarCalcStart) && (k < polarCalcEnd))
-                    lastn = matLayers.calcJonesMatrix(M, lightPolar, inAngle, lambda, lastn);
+                    lastn = matLayers[k]->calcJonesMatrix(M, lightPolar, inAngle, lambda, lastn);
                 else
-                    lastn = matLayers.calcJonesMatrix(M, inAngle, lambda, lastn);
+                    lastn = matLayers[k]->calcJonesMatrix(M, inAngle, lambda, lastn);
             }
             const double& theta_i = std::get<0>(inAngle);
               //refraction back to air
             const double& theta_r = std::get<0>(inAngles[i][j]);
-            EigenM22 tMat;
-            tMat << (2.0*lastn*cos(theta_i)/(lastn*cos(theta_i)+nAvg*cos(theta_r))),0,0,
-                    (2.0*lastn*cos(theta_i)/(lastn*cos(theta_r)+nAvg*cos(theta_i)));
+            LCDOptics::EigenM22 tMat;
+            tMat << (2.0*lastn*cos(theta_i)/(lastn*cos(theta_i)+nAir*cos(theta_r))),0,0,
+                    (2.0*lastn*cos(theta_i)/(lastn*cos(theta_r)+nAir*cos(theta_i)));
             M=tMat*M;
               //put tramissions into transTemp first
             transTemp[i][j]=0.5*(pow(std::abs(M(0,0)),2.0)+pow(std::abs(M(0,1)),2.0)
@@ -185,24 +188,24 @@ const STOKESRESULT& ExtendedJones::getStokes(){
 
 void ExtendedJones::resetTransmissions(){
     transmissions.clear();
-    transmissions = DOUBLEARRAY2D(_inAngles.size(), DOUBLEARRAY1D(_inAngles[0].size(), 0.0));
+    transmissions = DOUBLEARRAY2D(inAngles.size(), DOUBLEARRAY1D(inAngles[0].size(), 0.0));
 }
 
 void ExtendedJones::resetTransTemp(){
     transTemp.clear();
-    transTemp = DOUBLEARRAY2D(_inAngles.size(), DOUBLEARRAY1D(_inAngles[0].size(), 0.0));
+    transTemp = DOUBLEARRAY2D(inAngles.size(), DOUBLEARRAY1D(inAngles[0].size(), 0.0));
 }
 void ExtendedJones::resetStokes(){
     stokes.clear();
-    stokes = STOKESRESULT(lambdas.size(), std::vector<std::vector<STOKESTRACE> >(_inAngles.size(),
-        std::vector<STOKESTRACE>(_inAngles[0].size())));
+    stokes = STOKESRESULT(lambdas.size(), std::vector<std::vector<STOKESTRACE> >(inAngles.size(),
+        std::vector<STOKESTRACE>(inAngles[0].size())));
 }
 
 void ExtendedJones::resetToCalculateWithNewDiretors(DIRVEC _in){
     if (lcLayerindex >= 0){
-        std::shared_ptr<Optical2X2OneLayer<UniaxialType> > tempLayerPtr;
-        tempLayerPtr = std::dynamic_pointer_cast<Optical2X2OneLayer<UniaxialType>,
-            Optical2X2OneLayerBase>(matLayers[lcLayerindex]);
+        LCDOptics::Optical2x2UnixialPtr tempLayerPtr;
+        tempLayerPtr = std::dynamic_pointer_cast<LCDOptics::Optical2X2OneLayer<LCDOptics::UniaxialType>,
+            LCDOptics::Optical2X2OneLayerBase>(matLayers[lcLayerindex]);
         if (tempLayerPtr) tempLayerPtr->resetDirectors(_in);
     }
 }

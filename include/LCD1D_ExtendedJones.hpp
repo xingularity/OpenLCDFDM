@@ -23,6 +23,14 @@
 
 namespace LCD1D{
     using LCDOptics::POLARTRACE;
+    using LCDOptics::MATERIALLAYERS2X2CONT;
+    using LCDOptics::IAngles;
+    using LCDOptics::Angle;
+    using LCDOptics::LIGHTSPECTRUMDATA;
+    using LCD::DIRVEC;
+    using LCDOptics::JONESMAT;
+    using LCD::DOUBLEARRAY1D;
+    using LCD::DOUBLEARRAY2D;
     using TRANSRESULT = DOUBLEARRAY2D;
     using STOKESTRACE = std::vector<Eigen::Vector3d>;
     using STOKESRESULT = std::vector<std::vector<std::vector<STOKESTRACE> > >;
@@ -46,6 +54,8 @@ namespace LCD1D{
         ///return if this object calculates stokes values
         bool isCalcStokes()const {return ifCalcStokes;}
     private:
+        ///If LC layer is sandwiched between 2 polarizer layers with the theta angles of their optical axis equal to 90 or 270 degree, the stokes value can be calculated.
+        void checkIfCalcStokes();
         ///for single-wavelength calculation, no stokes calculation.
         void calculateOneLambdaNoStokes(int iLambda);
         ///for single-wavelength calculation and stokes calculation.

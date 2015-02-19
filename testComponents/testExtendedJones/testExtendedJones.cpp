@@ -26,10 +26,41 @@ using namespace LCDOptics;
 using namespace LCD1D;
 using namespace LCD;
 
+IAngles createAngles(){
+    IAngles inAngles;
+
+}
+
+LIGHTSPECTRUMDATA ReadLightSourceSpectrum(std::string _filename){
+    LIGHTSPECTRUMDATA lightSrc;
+    fstream file;
+    file.open(_filename.c_str(),fstream::in);
+    if (!file){
+        std::cout << "Open file failed in ReadLightSourceSpectrum" << std::endl;
+        assert(false);
+    }
+    string line;
+    while(getline(file, line)){
+        double lambda, power;
+        std::string temp;
+        stringstream ss(line);
+        getline(ss, temp, ',');
+        lambda = strToNumeric<double>(temp);
+        getline(ss, temp, ',');
+        power = strToNumeric<double>(temp);
+        lightSrc[lambda] = power;
+    }
+    return lightSrc;
+}
+
 NKData ReadIsotropicNKData(std::string _filename){
     NKData nkSpectrum;
     fstream file;
     file.open(_filename.c_str(),fstream::in);
+    if (!file){
+        std::cout << "Open file failed in ReadIsotropicNKData" << std::endl;
+        assert(false);
+    }
     string line;
     while(getline(file, line)){
         double lambda, n, k;
@@ -49,12 +80,19 @@ NKData ReadIsotropicNKData(std::string _filename){
 void testSingleGlass(){
     std::cout << "Start to calculate single glass case..." << std::endl;
     NKData nkSpectrum = ReadIsotropicNKData("GlassNKSpectrum.csv");
+    LIGHTSPECTRUMDATA lightSrc = ReadLightSourceSpectrum("D65.csv");
     /*
     for (auto i : nkSpectrum){
         std:: cout << i.first << ", " << i.second << std::endl;
     }
     */
+    /*
+    for (auto i : lightSrc){
+        std:: cout << i.first << ", " << i.second << std::endl;
+    }
+    */
     
+
 }
 
 int main(int argc, char const *argv[]) {

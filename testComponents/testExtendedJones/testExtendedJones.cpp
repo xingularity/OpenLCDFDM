@@ -78,6 +78,35 @@ NKData ReadIsotropicNKData(std::string _filename){
     return nkSpectrum;
 }
 
+NKoNKeData ReadUniaxialNKData(std::string _filename){
+    NKoNKeData nkSpectrum;
+    fstream file;
+    file.open(_filename.c_str(),fstream::in);
+    if (!file){
+        std::cout << "Open file failed in ReadIsotropicNKData" << std::endl;
+        assert(false);
+    }
+    string line;
+    while(getline(file, line)){
+        double lambda, no, ko, ne, ke;
+        std::string temp;
+        stringstream ss(line);
+        getline(ss, temp, ',');
+        lambda = strToNumeric<double>(temp);
+        getline(ss, temp, ',');
+        no = strToNumeric<double>(temp);
+        getline(ss, temp, ',');
+        ko = strToNumeric<double>(temp);
+        getline(ss, temp, ',');
+        ne = strToNumeric<double>(temp);
+        getline(ss, temp, ',');
+        ke = strToNumeric<double>(temp);
+        nkSpectrum[lambda] = std::make_tuple(COMPD(no,-1.0*std::abs(ko)), COMPD(ne,-1.0*std::abs(ke)));
+    }
+    return nkSpectrum;
+}
+
+
 //create all viweing angles
 IAngles createInAngles(){
     IAngles answer;
@@ -130,7 +159,14 @@ void testSingleGlass(){
     output.close();
 }
 
+void testCrossPolarizer(){
+    std::cout << "Start to calculate cross polarizer case..." << std::endl;
+    NKoNKeData polarizerSpectrum = ReadUniaxialNKData("TestPolarizerSpectrum.csv");
+
+}
+
 int main(int argc, char const *argv[]) {
-    testSingleGlass();
+    //testSingleGlass();
+    testCrossPolarizer();
     return 0;
 }

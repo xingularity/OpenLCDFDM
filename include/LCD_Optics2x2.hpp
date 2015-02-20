@@ -98,7 +98,9 @@ namespace LCDOptics{
     private:
         ///find nk for corresponding lambda
         COMPD findNK(double lambda);
-        ///nk dispersion for isotropic material
+        ///input nk dispersion for isotropic material
+        const NKData nk_in;
+        ///nk dispersion used in calculation
         NKData nk;
         ///Interpolation of nk distribution
         SpectrumInterpolator<NKData> nkInterpolator;
@@ -123,7 +125,9 @@ namespace LCDOptics{
     private:
         ///find nk for corresponding lambda. If find in map, then return. Otherwise, interpolate immediately
         NKoNKe findNK(double lambda);
-        ///nk dispersion for uniaxial material
+        ///input nk dispersion for uniaxial material
+        const NKoNKeData nk_in;
+        ///nk dispersion for calculation
         NKoNKeData nk;
         ///Interpolation of nk distribution
         SpectrumInterpolator<NKoNKeData> nkInterpolator;

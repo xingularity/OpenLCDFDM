@@ -21,7 +21,7 @@
 using namespace LCDOptics;
 
 Optical2X2OneLayer<ISOType>::Optical2X2OneLayer(double thickness, NKData _nk, OpticalMaterialClass _layerMaterialClass):
-Optical2X2OneLayerBase(_layerMaterialClass){
+Optical2X2OneLayerBase(_layerMaterialClass), nk_in(_nk){
     materialtype = ISOType;
     this->d = thickness;
     nk = _nk;
@@ -29,9 +29,7 @@ Optical2X2OneLayerBase(_layerMaterialClass){
 
 void Optical2X2OneLayer<ISOType>::interpolateNKForLambdas(DOUBLEARRAY1D lambdas_){
     nkInterpolator.resetTargetLambdas(lambdas_);
-    NKData new_nk;
-    nkInterpolator.interpolate(nk, new_nk);
-    nk = new_nk;
+    nkInterpolator.interpolate(nk_in, nk);
 }
 
 COMPD Optical2X2OneLayer<ISOType>::findNK(double lambda){
@@ -79,7 +77,7 @@ Angle& iang, double lambda, double lastn){
 }
 
 Optical2X2OneLayer<UniaxialType>::Optical2X2OneLayer(double thickness, NKoNKeData _nk, OpticalMaterialClass _layerMaterialClass):
-Optical2X2OneLayerBase(_layerMaterialClass){
+Optical2X2OneLayerBase(_layerMaterialClass), nk_in(_nk){
     materialtype = UniaxialType;
     this->d = thickness;
     nk = _nk;
@@ -87,9 +85,7 @@ Optical2X2OneLayerBase(_layerMaterialClass){
 
 void Optical2X2OneLayer<UniaxialType>::interpolateNKForLambdas(DOUBLEARRAY1D lambdas_){
     nkInterpolator.resetTargetLambdas(lambdas_);
-    NKoNKeData new_nk;
-    nkInterpolator.interpolate(nk, new_nk);
-    nk = new_nk;
+    nkInterpolator.interpolate(nk_in, nk);
 }
 
 NKoNKe Optical2X2OneLayer<UniaxialType>::findNK(double lambda){

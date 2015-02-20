@@ -23,18 +23,21 @@
 
 using namespace LCD1D;
 
-ExtendedJones::ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifStokes):
+ExtendedJones::ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,
+    const double targetLambda, LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifLambertian, bool _ifStokes):
 ExtendedJonesBase(_materials, _inAngles, targetLambda, lightSrcSpectrum_)
 {
+    ifLambertian = _ifLambertian;
     findLCLayerInMaterialList();
     if (_ifStokes)checkIfCalcStokes();
     if (ifCalcStokes)resetStokes();
 }
 
 ExtendedJones::ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
-const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifStokes):
+const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifLambertian, bool _ifStokes):
 ExtendedJonesBase(_materials, _inAngles, start_lambda_, end_lambda_, step_lambda_, lightSrcSpectrum_)
 {
+    ifLambertian = _ifLambertian;
     findLCLayerInMaterialList();
     if (_ifStokes)checkIfCalcStokes();
     if (ifCalcStokes)resetStokes();
@@ -81,6 +84,11 @@ void ExtendedJones::calculateExtendedJones(){
         if (lambdas.size() == 1){
             calculateOneLambdaNoStokes(0);
             transmissions = transTemp;
+            if (ifLambertian){
+                for(int i = 0; i < transmissions.size(); ++i)
+                    for(int j = 0; j < transmissions[i].size(); ++j)
+                        transmissions[i][j]*=cos(std::get<0>(inAngles[i][j]));
+            }
         }
         else{
             double denominator = 0.0;
@@ -97,6 +105,11 @@ void ExtendedJones::calculateExtendedJones(){
             for(int i = 0; i < transmissions.size(); ++i)
                 for(int j = 0; j < transmissions[i].size(); ++j)
                     transmissions[i][j]/=denominator;
+            if (ifLambertian){
+                for(int i = 0; i < transmissions.size(); ++i)
+                    for(int j = 0; j < transmissions[i].size(); ++j)
+                        transmissions[i][j]*=cos(std::get<0>(inAngles[i][j]));
+            }
         }
     }
 }

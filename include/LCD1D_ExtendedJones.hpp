@@ -35,14 +35,15 @@ namespace LCD1D{
     using STOKESTRACE = std::vector<Eigen::Vector3d>;
     using STOKESRESULT = std::vector<std::vector<std::vector<STOKESTRACE> > >;
     ///Main function for extended Jones matrix
-    class ExtendedJones: LCDOptics::ExtendedJonesBase{
+    class ExtendedJones: public LCDOptics::ExtendedJonesBase{
     public:
         ///For sigle wavelength calculation
         ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda,
-            LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifStokes=false);
+            LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifLambertian = false, bool _ifStokes=false);
         ///For multiwavelengths calculation
         ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
-        const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifStokes=false);
+        const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_,
+        bool _ifLambertian = false, bool _ifStokes=false);
         ///main function to calculate extended Jones.
         void calculateExtendedJones();
         ///return the transmission results
@@ -73,6 +74,7 @@ namespace LCD1D{
         STOKESRESULT stokes;
         ///if user wanna calculate Stokes
         bool ifCalcStokes{false};
+        bool ifLambertian{false};
     };
 };
 

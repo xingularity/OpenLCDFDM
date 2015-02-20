@@ -222,6 +222,6 @@ void ExtendedJones::resetToCalculateWithNewDiretors(DIRVEC _in){
         LCDOptics::Optical2x2UnixialPtr tempLayerPtr;
         tempLayerPtr = std::dynamic_pointer_cast<LCDOptics::Optical2X2OneLayer<LCDOptics::UniaxialType>,
             LCDOptics::Optical2X2OneLayerBase>(matLayers[lcLayerindex]);
-        if (tempLayerPtr) tempLayerPtr->resetDirectors(_in);
+        if (tempLayerPtr) tempLayerPtr->resetAxes(_in);
     }
 }

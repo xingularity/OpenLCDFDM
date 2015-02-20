@@ -50,6 +50,11 @@ namespace LCDOptics{
         virtual void interpolateNKForLambdas(DOUBLEARRAY1D lambdas_) = 0;
         OpticalMaterialClass opticalLayerKind(){return layerMaterialClass;}
         const DIRVEC getAxes(){return axisVec;}
+        void resetAxes(DIRVEC _in){
+            layernum = _in.size();
+            axisVec.resize(_in.size());
+            axisVec = _in;
+        }
     protected:
         ///calculate polarizations based on input Jones matrix
         void calculatePolarization(const EigenC22& m, POLARTRACE& lightPolar){
@@ -116,7 +121,6 @@ namespace LCDOptics{
     public:
         ///For uniaxial material.
         Optical2X2OneLayer(double thickness, NKoNKeData _nk, OpticalMaterialClass _layerMaterialClass = OPT_UNIAXIAL);
-        void resetDirectors(DIRVEC _in);
         ///calculate one jones matrix and return its average refractive index and incident angles
         virtual double calcJonesMatrix(JONESMAT& m, Angle& iang, double lambda, double lastn);
         ///calculate one jones matrix and light polarization, return the average refractive index and incident angles

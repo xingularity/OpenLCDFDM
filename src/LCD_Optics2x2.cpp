@@ -280,8 +280,3 @@ POLARTRACE& lightPolar, Angle& iang, double lambda, double lastn){
     std::get<0>(iang)=theta_r;
     return nAvg;
 }
-
-void Optical2X2OneLayer<UniaxialType>::resetDirectors(DIRVEC _in){
-    layernum = _in.size();
-    axisVec = _in;
-}

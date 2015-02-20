@@ -162,7 +162,25 @@ void testSingleGlass(){
 void testCrossPolarizer(){
     std::cout << "Start to calculate cross polarizer case..." << std::endl;
     NKoNKeData polarizerSpectrum = ReadUniaxialNKData("TestPolarizerSpectrum.csv");
-
+    MATERIALLAYERS2X2CONT materials;
+    materials.push_back(Optical2x2UnixialPtr(new Optical2x2UnixialPtr::element_type(20.0, polarizerSpectrum, OPT_POLARIZER)));
+    materials.push_back(Optical2x2UnixialPtr(new Optical2x2UnixialPtr::element_type(20.0, polarizerSpectrum, OPT_POLARIZER)));
+    //set first polarizer to 45 degree
+    double theta_pol = 90.0*M_PI/180.0;
+    double phi_pol1 = 45.0*M_PI/180.0;
+    double phi_pol2 = 135.0*M_PI/180.0;
+    DIRVEC pol1; pol1.resize(1);
+    pol1(0)(0) = sin(theta_pol)*cos(phi_pol1);
+    pol1(0)(1) = sin(theta_pol)*sin(phi_pol1);
+    pol1(0)(2) = cos(theta_pol);
+    materials[0]->resetAxes(pol1);
+    DIRVEC pol2; pol2.resize(1);
+    pol2(0)(0) = sin(theta_pol)*cos(phi_pol2);
+    pol2(0)(1) = sin(theta_pol)*sin(phi_pol2);
+    pol2(0)(2) = cos(theta_pol);
+    materials[1]->resetAxes(pol2);
+    std::cout << materials[0]->getAxes() <<std::endl;
+    std::cout << materials[1]->getAxes() <<std::endl;
 }
 
 int main(int argc, char const *argv[]) {

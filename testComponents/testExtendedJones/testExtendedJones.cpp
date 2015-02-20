@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #include "../../include/LCD1D_ExtendedJones.hpp"
 #include "../../include/LCD_UsefulFuncs.hpp"
 
@@ -72,30 +73,61 @@ NKData ReadIsotropicNKData(std::string _filename){
         n = strToNumeric<double>(temp);
         getline(ss, temp, ',');
         k = strToNumeric<double>(temp);
-        nkSpectrum[lambda] = COMPD(n,k);
+        nkSpectrum[lambda] = COMPD(n,-1.0*std::abs(k));
     }
     return nkSpectrum;
 }
 
-void testSingleGlass(){
+//create all viweing angles
+IAngles createInAngles(){
+    IAngles answer;
+    answer = std::vector< std::vector<Angle> >(81, std::vector<Angle>(361));
+    for (int i = 0; i <= 80; ++i)
+        for(int j = 0; j <= 360; ++j)
+            answer[i][j] = makeAngle2(i,j);
+    return answer;
+}
+
+void testSingleGlassMultiWavelength(){
     std::cout << "Start to calculate single glass case..." << std::endl;
     NKData nkSpectrum = ReadIsotropicNKData("GlassNKSpectrum.csv");
     LIGHTSPECTRUMDATA lightSrc = ReadLightSourceSpectrum("D65.csv");
-    /*
-    for (auto i : nkSpectrum){
-        std:: cout << i.first << ", " << i.second << std::endl;
-    }
-    */
-    /*
-    for (auto i : lightSrc){
-        std:: cout << i.first << ", " << i.second << std::endl;
-    }
-    */
-    
+    MATERIALLAYERS2X2CONT materials;
+    materials.push_back(Optical2x2IsoPtr(new Optical2X2OneLayer<ISOType>(500.0, nkSpectrum, OPT_GLASS)));
+    IAngles inAngles = createInAngles();
+    ExtendedJones extj(materials, inAngles, 0.38, 0.78, 0.01, lightSrc, false);
+    extj.calculateExtendedJones();
+    TRANSRESULT answer = extj.getTransmissions();
+    //output to file
+    ofstream output("GlassOnly_MultiWaveLength_D65.csv", std::fstream::out|std::fstream::trunc);
+    output << std::setprecision(15);
+    for (int i =0; i < answer.size(); ++i)
+        for(int j = 0; j < answer[i].size(); ++j)
+            output << std::get<0>(inAngles[i][j])*180.0/M_PI << ", " << std::get<1>(inAngles[i][j])*180.0/M_PI << "," << answer[i][j] << std::endl;
+    output.close();
+}
 
+void testSingleGlassSingleWavelength(){
+    std::cout << "Start to calculate single glass case..." << std::endl;
+    NKData nkSpectrum = ReadIsotropicNKData("GlassNKSpectrum.csv");
+    LIGHTSPECTRUMDATA lightSrc = ReadLightSourceSpectrum("D65.csv");
+    MATERIALLAYERS2X2CONT materials;
+    materials.push_back(Optical2x2IsoPtr(new Optical2X2OneLayer<ISOType>(500.0, nkSpectrum, OPT_GLASS)));
+    IAngles inAngles = createInAngles();
+    ExtendedJones extj(materials, inAngles, 0.55, lightSrc, false);
+    extj.calculateExtendedJones();
+    TRANSRESULT answer = extj.getTransmissions();
+    //output to file
+    ofstream output("GlassOnly_SingleWaveLength.csv", std::fstream::out|std::fstream::trunc);
+    output << std::setprecision(15);
+    for (int i =0; i < answer.size(); ++i)
+        for(int j = 0; j < answer[i].size(); ++j)
+            output << std::get<0>(inAngles[i][j])*180.0/M_PI << ", " << std::get<1>(inAngles[i][j])*180.0/M_PI << "," << answer[i][j] << std::endl;
+    output.close();
 }
 
 int main(int argc, char const *argv[]) {
-    testSingleGlass();
+    testSingleGlassSingleWavelength();
+    testSingleGlassMultiWavelength();
     return 0;
 }

@@ -57,6 +57,16 @@ namespace LCDOptics{
         BiaxialType=2,
     };
 
+    ///create an "Angle" tuple with radian data
+    inline Angle makeAngle(double theta, double phi){
+        return std::make_tuple(theta, phi);
+    }
+
+    ///create an "Angle" tuple with degree data
+    inline Angle makeAngle2(double theta, double phi){
+        return std::make_tuple(theta*M_PI/180.0, phi*M_PI/180.0);
+    }
+
     /**
     SpectrumInterpolator interpolates given nk dispersion to taget nk dispersion.<br/>
     Using linear interpolation.

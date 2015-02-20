@@ -151,6 +151,12 @@ namespace LCDOptics{
                 std::cout << "Can't calculate optics without any layer of optical material." << std::endl;
                 assert(false);
             }
+            // if input lightSrcSpectrum_ is empty, then use equal energy spectrum
+            if (lightSrcSpectrum_.size() == 0){
+                lightSrcSpectrum_[0.38] = 1.0;
+                lightSrcSpectrum_[0.78] = 1.0;
+            }
+            //begin to do spectrum interpolation
             SpectrumInterpolator<LIGHTSPECTRUMDATA> interpolator(lambdas);
             interpolator.interpolate(SpectrumEfficiency, yBarOfLambda);
             interpolator.interpolate(lightSrcSpectrum_, lightSourceSpectrum);

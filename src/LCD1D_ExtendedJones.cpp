@@ -73,7 +73,7 @@ void ExtendedJones::calculateExtendedJones(){
         throw std::runtime_error("can't calculate extended Jones matrix without any given wavelength");
     //interpolate all NK data to target wavelengths
     for (int i = 0; i < matLayers.size(); ++i)
-        matLayers[lcLayerindex]->interpolateNKForLambdas(lambdas);
+        matLayers[i]->interpolateNKForLambdas(lambdas);
     if (ifCalcStokes){
         resetStokes();
         throw std::runtime_error("Not yet support Stokes in ExtendedJones::calculateExtendedJones()");
@@ -90,12 +90,12 @@ void ExtendedJones::calculateExtendedJones(){
             for (int i = 0; i < lambdas.size();++i){
                 calculateOneLambdaNoStokes(i);
                 for(int j = 0; j < transmissions.size(); ++j)
-                    for(int k = 0; k < transmissions.size(); ++k)
+                    for(int k = 0; k < transmissions[j].size(); ++k)
                         transmissions[j][k] += transTemp[j][k] * lightSourceSpectrum[i] * yBarOfLambda[i] * step_lambda;
 
             }
             for(int i = 0; i < transmissions.size(); ++i)
-                for(int j = 0; j < transmissions.size(); ++j)
+                for(int j = 0; j < transmissions[i].size(); ++j)
                     transmissions[i][j]/=denominator;
         }
     }
@@ -112,8 +112,10 @@ void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
             JONESMAT M;
             M << 1.0,0.0,0.0,1.0;
             Angle inAngle = inAngles[i][j];
-            for (int k =0; k < matLayerNum; k++)
+            lastn = nAir;
+            for (int k =0; k < matLayerNum; k++){
                 lastn = matLayers[k]->calcJonesMatrix(M, inAngle, lambda, lastn);
+            }
                 const double& theta_i = std::get<0>(inAngle);
                   //refraction back to air
                 const double& theta_r = std::get<0>(inAngles[i][j]);
@@ -143,6 +145,7 @@ void ExtendedJones::calculateOneLambdaWithStokes(int iLambda){
             M << 1.0,0.0,0.0,1.0;
             Angle inAngle = inAngles[i][j];
             POLARTRACE lightPolar(0); //no elements at init
+            lastn = nAir;
             for (int k =0; k < matLayerNum; k++){
                 if ((k >= polarCalcStart) && (k < polarCalcEnd))
                     lastn = matLayers[k]->calcJonesMatrix(M, lightPolar, inAngle, lambda, lastn);

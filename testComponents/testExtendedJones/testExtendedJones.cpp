@@ -162,40 +162,7 @@ void testSingleGlass(){
     LIGHTSPECTRUMDATA lightSrc = ReadLightSourceSpectrum("TestLightSrc.csv");
     MATERIALLAYERS2X2CONT materials;
     materials.push_back(Optical2x2IsoPtr(new Optical2X2OneLayer<ISOType>(500.0, nkSpectrum, OPT_GLASS)));
-    IAngles inAngles = createInAngles();
-
-    ExtendedJones extj(materials, inAngles, 0.55, lightSrc, false, false);
-    extj.calculateExtendedJones();
-    TRANSRESULT answer = extj.getTransmissions();
-    //output to file
-    ofstream output("GlassOnly_SingleWaveLength_0.55um.csv", std::fstream::out|std::fstream::trunc);
-    output << std::setprecision(15);
-    for (int i =0; i < answer.size(); ++i)
-        for(int j = 0; j < answer[i].size(); ++j)
-            output << std::get<0>(inAngles[i][j])*180.0/M_PI << ", " << std::get<1>(inAngles[i][j])*180.0/M_PI << ", " << answer[i][j] << std::endl;
-    output.close();
-
-    ExtendedJones extj2(materials, inAngles, 0.38, 0.78, 0.01, lightSrc, false, false);
-    extj2.calculateExtendedJones();
-    answer = extj2.getTransmissions();
-    //output to file
-    output.open("GlassOnly_MultiWaveLength_TestLightSrc.csv", std::fstream::out|std::fstream::trunc);
-    output << std::setprecision(15);
-    for (int i =0; i < answer.size(); ++i)
-        for(int j = 0; j < answer[i].size(); ++j)
-            output << std::get<0>(inAngles[i][j])*180.0/M_PI << ", " << std::get<1>(inAngles[i][j])*180.0/M_PI << ", " << answer[i][j] << std::endl;
-    output.close();
-
-    ExtendedJones extj3(materials, inAngles, 0.38, 0.78, 0.01, lightSrc, true, false);
-    extj3.calculateExtendedJones();
-    answer = extj3.getTransmissions();
-    //output to file
-    output.open("GlassOnly_MultiWaveLength_TestLightSrc_Lambertian.csv", std::fstream::out|std::fstream::trunc);
-    output << std::setprecision(15);
-    for (int i =0; i < answer.size(); ++i)
-        for(int j = 0; j < answer[i].size(); ++j)
-            output << std::get<0>(inAngles[i][j])*180.0/M_PI << ", " << std::get<1>(inAngles[i][j])*180.0/M_PI << ", " << answer[i][j] << std::endl;
-    output.close();
+    calculateAndOutput("GlassOnly", materials, lightSrc);
 }
 
 void testCrossPolarizer(){
@@ -225,7 +192,7 @@ void testCrossPolarizer(){
 }
 
 int main(int argc, char const *argv[]) {
-    //testSingleGlass();
+    testSingleGlass();
     testCrossPolarizer();
     return 0;
 }

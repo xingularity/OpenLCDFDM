@@ -98,7 +98,8 @@ double Optical2X2OneLayer<UniaxialType>::calcJonesMatrix(JONESMAT& M, Angle& ian
     NKoNKe nn = findNK(lambda);
     const COMPD& no = std::get<0>(nn);
     const COMPD& ne = std::get<1>(nn);
-    double nAvg = no.real()*2.0/3.0 + ne.real()/3.0;
+    //double nAvg = no.real()*2.0/3.0 + ne.real()/3.0;
+    double nAvg = no.real();
 
     const double& theta_i = std::get<0>(iang);
     const double& phi = std::get<1>(iang);
@@ -181,7 +182,8 @@ POLARTRACE& lightPolar, Angle& iang, double lambda, double lastn){
     NKoNKe nn = findNK(lambda);
     const COMPD& no = std::get<0>(nn);
     const COMPD& ne = std::get<1>(nn);
-    double nAvg = no.real()*2.0/3.0 + ne.real()/3.0;
+    //double nAvg = no.real()*2.0/3.0 + ne.real()/3.0;
+    double nAvg = no.real();
 
     const double& theta_i = std::get<0>(iang);
     const double& phi = std::get<1>(iang);

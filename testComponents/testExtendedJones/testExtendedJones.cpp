@@ -117,6 +117,45 @@ IAngles createInAngles(){
     return answer;
 }
 
+void calculateAndOutput(std::string output_prefix, MATERIALLAYERS2X2CONT materials, LIGHTSPECTRUMDATA lightSrc){
+    IAngles inAngles = createInAngles();
+    //start to calculate single wavelength case
+    ExtendedJones extj(materials, inAngles, 0.55, lightSrc, false, false);
+    extj.calculateExtendedJones();
+    TRANSRESULT answer = extj.getTransmissions();
+    //output to file
+    ofstream output((output_prefix + "_SingleWaveLength_0.55um.csv").c_str(), std::fstream::out|std::fstream::trunc);
+    output << std::setprecision(15);
+    for (int i =0; i < answer.size(); ++i)
+        for(int j = 0; j < answer[i].size(); ++j)
+            output << std::get<0>(inAngles[i][j])*180.0/M_PI << ", " << std::get<1>(inAngles[i][j])*180.0/M_PI << ", " << answer[i][j] << std::endl;
+    output.close();
+
+    //start to calculate multiple wavelength case
+    ExtendedJones extj2(materials, inAngles, 0.38, 0.78, 0.01, lightSrc, false, false);
+    extj2.calculateExtendedJones();
+    answer = extj2.getTransmissions();
+    //output to file
+    output.open((output_prefix + "_MultiWaveLength_TestLightSrc.csv").c_str(), std::fstream::out|std::fstream::trunc);
+    output << std::setprecision(15);
+    for (int i =0; i < answer.size(); ++i)
+        for(int j = 0; j < answer[i].size(); ++j)
+            output << std::get<0>(inAngles[i][j])*180.0/M_PI << ", " << std::get<1>(inAngles[i][j])*180.0/M_PI << ", " << answer[i][j] << std::endl;
+    output.close();
+
+    //start to calculate multiple wavelength case with Lambertian light source
+    ExtendedJones extj3(materials, inAngles, 0.38, 0.78, 0.01, lightSrc, true, false);
+    extj3.calculateExtendedJones();
+    answer = extj3.getTransmissions();
+    //output to file
+    output.open((output_prefix + "_MultiWaveLength_TestLightSrc_Lambertian.csv").c_str(), std::fstream::out|std::fstream::trunc);
+    output << std::setprecision(15);
+    for (int i =0; i < answer.size(); ++i)
+        for(int j = 0; j < answer[i].size(); ++j)
+            output << std::get<0>(inAngles[i][j])*180.0/M_PI << ", " << std::get<1>(inAngles[i][j])*180.0/M_PI << ", " << answer[i][j] << std::endl;
+    output.close();
+}
+
 void testSingleGlass(){
     std::cout << "Start to calculate single glass case..." << std::endl;
     NKData nkSpectrum = ReadIsotropicNKData("TestGlassNKSpectrum.csv");
@@ -161,14 +200,15 @@ void testSingleGlass(){
 
 void testCrossPolarizer(){
     std::cout << "Start to calculate cross polarizer case..." << std::endl;
+    LIGHTSPECTRUMDATA lightSrc = ReadLightSourceSpectrum("TestLightSrc.csv");
     NKoNKeData polarizerSpectrum = ReadUniaxialNKData("TestPolarizerSpectrum.csv");
     MATERIALLAYERS2X2CONT materials;
     materials.push_back(Optical2x2UnixialPtr(new Optical2x2UnixialPtr::element_type(20.0, polarizerSpectrum, OPT_POLARIZER)));
     materials.push_back(Optical2x2UnixialPtr(new Optical2x2UnixialPtr::element_type(20.0, polarizerSpectrum, OPT_POLARIZER)));
     //set first polarizer to 45 degree
     double theta_pol = 90.0*M_PI/180.0;
-    double phi_pol1 = 45.0*M_PI/180.0;
-    double phi_pol2 = 135.0*M_PI/180.0;
+    double phi_pol1 = 135.0*M_PI/180.0;
+    double phi_pol2 = 45.0*M_PI/180.0;
     DIRVEC pol1; pol1.resize(1);
     pol1(0)(0) = sin(theta_pol)*cos(phi_pol1);
     pol1(0)(1) = sin(theta_pol)*sin(phi_pol1);
@@ -181,6 +221,7 @@ void testCrossPolarizer(){
     materials[1]->resetAxes(pol2);
     std::cout << materials[0]->getAxes() <<std::endl;
     std::cout << materials[1]->getAxes() <<std::endl;
+    calculateAndOutput("CrossPolarizer", materials, lightSrc);
 }
 
 int main(int argc, char const *argv[]) {

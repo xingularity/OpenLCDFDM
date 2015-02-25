@@ -106,6 +106,42 @@ NKoNKeData ReadUniaxialNKData(std::string _filename){
     return nkSpectrum;
 }
 
+void ReadLCDirectors(std::string _filename, DIRVEC& dirVec){
+    fstream file;
+    file.open(_filename.c_str(),fstream::in);
+    std::string line;
+    //check how many lines in file
+    int numLines = 0;
+    while(getline(file, line)){
+        numLines++;
+    }
+    file.close();
+    //reopen to read
+    file.open(_filename.c_str(),fstream::in);
+    DIRVEC input;
+    input.resize(numLines);
+    for(int i = 0; getline(file, line); ++i){
+        double nx, ny, nz;
+        std::string temp;
+        stringstream ss(line);
+        getline(ss, temp, ',');
+        input(i)(0) = strToNumeric<double>(temp);
+        getline(ss, temp, ',');
+        input(i)(1) = strToNumeric<double>(temp);
+        getline(ss, temp, ',');
+        input(i)(2) = strToNumeric<double>(temp);
+    }
+    file.close();
+    dirVec.resize(input.size()-1);
+    for(int i =0; i < dirVec.size(); ++i){
+        double theta, phi;
+        theta = 0.5*(acos(input(i)(2)) + acos(input(i+1)(2)));
+        phi = 0.5*(atan2(input(i)(1), input(i)(0)) + atan2(input(i+1)(1), input(i+1)(0)));
+        dirVec(i)(0) = sin(theta)*cos(phi);
+        dirVec(i)(1) = sin(theta)*sin(phi);
+        dirVec(i)(2) = cos(theta);
+    }
+}
 
 //create all viweing angles
 IAngles createInAngles(){
@@ -143,10 +179,22 @@ void calculateAndOutput(std::string output_prefix, MATERIALLAYERS2X2CONT materia
             output << std::get<0>(inAngles[i][j])*180.0/M_PI << ", " << std::get<1>(inAngles[i][j])*180.0/M_PI << ", " << answer[i][j] << std::endl;
     output.close();
 
-    //start to calculate multiple wavelength case with Lambertian light source
-    ExtendedJones extj3(materials, inAngles, 0.38, 0.78, 0.01, lightSrc, true, false);
+    //start to calculate multiple wavelength case
+    ExtendedJones extj3(materials, inAngles, 0.38, 0.78, 0.01, LIGHTSPECTRUMDATA(), false, false);
     extj3.calculateExtendedJones();
     answer = extj3.getTransmissions();
+    //output to file
+    output.open((output_prefix + "_MultiWaveLength_EqWhite.csv").c_str(), std::fstream::out|std::fstream::trunc);
+    output << std::setprecision(15);
+    for (int i =0; i < answer.size(); ++i)
+        for(int j = 0; j < answer[i].size(); ++j)
+            output << std::get<0>(inAngles[i][j])*180.0/M_PI << ", " << std::get<1>(inAngles[i][j])*180.0/M_PI << ", " << answer[i][j] << std::endl;
+    output.close();
+
+    //start to calculate multiple wavelength case with Lambertian light source
+    ExtendedJones extj4(materials, inAngles, 0.38, 0.78, 0.01, lightSrc, true, false);
+    extj4.calculateExtendedJones();
+    answer = extj4.getTransmissions();
     //output to file
     output.open((output_prefix + "_MultiWaveLength_TestLightSrc_Lambertian.csv").c_str(), std::fstream::out|std::fstream::trunc);
     output << std::setprecision(15);
@@ -191,8 +239,37 @@ void testCrossPolarizer(){
     calculateAndOutput("CrossPolarizer", materials, lightSrc);
 }
 
+void testLC(){
+    DIRVEC dirVec;
+    ReadLCDirectors("TN_Director.txt", dirVec);
+    LIGHTSPECTRUMDATA lightSrc = ReadLightSourceSpectrum("TestLightSrc.csv");
+    NKoNKeData polarizerSpectrum = ReadUniaxialNKData("TestPolarizerSpectrum.csv");
+    NKoNKeData LCSpectrum = ReadUniaxialNKData("TestPositiveLC.csv");
+    MATERIALLAYERS2X2CONT materials;
+    materials.push_back(Optical2x2UnixialPtr(new Optical2x2UnixialPtr::element_type(20.0, polarizerSpectrum, OPT_POLARIZER)));
+    materials.push_back(Optical2x2UnixialPtr(new Optical2x2UnixialPtr::element_type(4.8, LCSpectrum, OPT_LCMATERIAL)));
+    materials.push_back(Optical2x2UnixialPtr(new Optical2x2UnixialPtr::element_type(20.0, polarizerSpectrum, OPT_POLARIZER)));
+    //set first polarizer to 45 degree
+    double theta_pol = 90.0*M_PI/180.0;
+    double phi_pol1 = 135.0*M_PI/180.0;
+    double phi_pol2 = 45.0*M_PI/180.0;
+    DIRVEC pol1; pol1.resize(1);
+    pol1(0)(0) = sin(theta_pol)*cos(phi_pol1);
+    pol1(0)(1) = sin(theta_pol)*sin(phi_pol1);
+    pol1(0)(2) = cos(theta_pol);
+    materials[0]->resetAxes(pol1);
+    DIRVEC pol2; pol2.resize(1);
+    pol2(0)(0) = sin(theta_pol)*cos(phi_pol2);
+    pol2(0)(1) = sin(theta_pol)*sin(phi_pol2);
+    pol2(0)(2) = cos(theta_pol);
+    materials[2]->resetAxes(pol2);
+    materials[1]->resetAxes(dirVec);
+    calculateAndOutput("TN_NoGlass", materials, lightSrc);
+}
+
 int main(int argc, char const *argv[]) {
-    testSingleGlass();
-    testCrossPolarizer();
+    //testSingleGlass();
+    //testCrossPolarizer();
+    testLC();
     return 0;
 }

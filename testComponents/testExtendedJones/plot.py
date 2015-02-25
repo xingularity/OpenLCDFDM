@@ -18,14 +18,18 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #!/usr/bin/python3
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
-myfile="CrossPolarizer_MultiWaveLength_TestLightSrc_Lambertian.csv"
-answerfile="Answer_CrossPolarizer_MultiWaveLength_TestLightSrc_Lambertian.csv"
+myfile=sys.argv[1]
+answerfile=sys.argv[2]
+print(myfile)
+print("vs.")
+print(answerfile)
 
 myfiledata = np.loadtxt(myfile,delimiter=',')
 answerfiledata = np.loadtxt(answerfile,delimiter=',')
 
-plotphidegree = 60.0
+plotphidegree = float(sys.argv[3])
 plotxdata = np.array(range(0,81))
 
 myfileplotdata = np.zeros(81)

@@ -95,6 +95,7 @@ NKoNKe Optical2X2OneLayer<UniaxialType>::findNK(double lambda){
 }
 
 double Optical2X2OneLayer<UniaxialType>::calcJonesMatrix(JONESMAT& M, Angle& iang, double lambda, double lastn){
+    if (axisVec.size() < 1) throw runtime_error("No optical axis data! reported in Optical2X2OneLayer<UniaxialType>::calcJonesMatrix");
     NKoNKe nn = findNK(lambda);
     const COMPD& no = std::get<0>(nn);
     const COMPD& ne = std::get<1>(nn);

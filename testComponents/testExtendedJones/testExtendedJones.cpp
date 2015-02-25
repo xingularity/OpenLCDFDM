@@ -27,11 +27,6 @@ using namespace LCDOptics;
 using namespace LCD1D;
 using namespace LCD;
 
-IAngles createAngles(){
-    IAngles inAngles;
-
-}
-
 LIGHTSPECTRUMDATA ReadLightSourceSpectrum(std::string _filename){
     LIGHTSPECTRUMDATA lightSrc;
     fstream file;
@@ -234,8 +229,6 @@ void testCrossPolarizer(){
     pol2(0)(1) = sin(theta_pol)*sin(phi_pol2);
     pol2(0)(2) = cos(theta_pol);
     materials[1]->resetAxes(pol2);
-    std::cout << materials[0]->getAxes() <<std::endl;
-    std::cout << materials[1]->getAxes() <<std::endl;
     calculateAndOutput("CrossPolarizer", materials, lightSrc);
 }
 
@@ -267,9 +260,41 @@ void testLC(){
     calculateAndOutput("TN_NoGlass", materials, lightSrc);
 }
 
+void testLCWithGlass(){
+    DIRVEC dirVec;
+    ReadLCDirectors("TN_Director.txt", dirVec);
+    NKData nkSpectrum = ReadIsotropicNKData("TestGlassNKSpectrum.csv");
+    LIGHTSPECTRUMDATA lightSrc = ReadLightSourceSpectrum("TestLightSrc.csv");
+    NKoNKeData polarizerSpectrum = ReadUniaxialNKData("TestPolarizerSpectrum.csv");
+    NKoNKeData LCSpectrum = ReadUniaxialNKData("TestPositiveLC.csv");
+    MATERIALLAYERS2X2CONT materials;
+    materials.push_back(Optical2x2IsoPtr(new Optical2x2IsoPtr::element_type(500.0, nkSpectrum, OPT_GLASS)));
+    materials.push_back(Optical2x2UnixialPtr(new Optical2x2UnixialPtr::element_type(20.0, polarizerSpectrum, OPT_POLARIZER)));
+    materials.push_back(Optical2x2UnixialPtr(new Optical2x2UnixialPtr::element_type(4.8, LCSpectrum, OPT_LCMATERIAL)));
+    materials.push_back(Optical2x2UnixialPtr(new Optical2x2UnixialPtr::element_type(20.0, polarizerSpectrum, OPT_POLARIZER)));
+    materials.push_back(Optical2x2IsoPtr(new Optical2x2IsoPtr::element_type(500.0, nkSpectrum, OPT_GLASS)));
+    //set first polarizer to 45 degree
+    double theta_pol = 90.0*M_PI/180.0;
+    double phi_pol1 = 135.0*M_PI/180.0;
+    double phi_pol2 = 45.0*M_PI/180.0;
+    DIRVEC pol1; pol1.resize(1);
+    pol1(0)(0) = sin(theta_pol)*cos(phi_pol1);
+    pol1(0)(1) = sin(theta_pol)*sin(phi_pol1);
+    pol1(0)(2) = cos(theta_pol);
+    materials[1]->resetAxes(pol1);
+    DIRVEC pol2; pol2.resize(1);
+    pol2(0)(0) = sin(theta_pol)*cos(phi_pol2);
+    pol2(0)(1) = sin(theta_pol)*sin(phi_pol2);
+    pol2(0)(2) = cos(theta_pol);
+    materials[3]->resetAxes(pol2);
+    materials[2]->resetAxes(dirVec);
+    calculateAndOutput("TN_WithGlass", materials, lightSrc);
+}
+
 int main(int argc, char const *argv[]) {
-    //testSingleGlass();
-    //testCrossPolarizer();
+    testSingleGlass();
+    testCrossPolarizer();
     testLC();
+    testLCWithGlass();
     return 0;
 }

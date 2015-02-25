@@ -1,2 +1,2 @@
 all:
-	g++ *cpp -g -ggdb ../../src/*.cpp -std=c++11 -I ../../include/
+	g++ *cpp -O3 ../../src/*.cpp -std=c++11 -I ../../include/

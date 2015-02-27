@@ -72,6 +72,7 @@ void ExtendedJones::checkIfCalcStokes(){
 void ExtendedJones::calculateExtendedJones(){
     //reset before calculation to be sure.
     resetTransmissions();
+    resetTransEachLambda();
     if (lambdas.size() == 0)
         throw std::runtime_error("can't calculate extended Jones matrix without any given wavelength");
     //interpolate all NK data to target wavelengths
@@ -83,39 +84,45 @@ void ExtendedJones::calculateExtendedJones(){
     }else{
         if (lambdas.size() == 1){
             calculateOneLambdaNoStokes(0);
-            transmissions = transTemp;
+            //Lambertian light source
             if (ifLambertian){
                 for(int i = 0; i < transmissions.size(); ++i)
                     for(int j = 0; j < transmissions[i].size(); ++j)
-                        transmissions[i][j]*=cos(std::get<0>(inAngles[i][j]));
+                        transEachLambda[0][i][j]*=cos(std::get<0>(inAngles[i][j]));
             }
+            transmissions = transEachLambda[0];
         }
         else{
             double denominator = 0.0;
             double step_lambda = lambdas[1] - lambdas[0];
             for (int i =0; i < lightSourceSpectrum.size(); ++i)
                 denominator += lightSourceSpectrum[i] * yBarOfLambda[i] * step_lambda;
-            for (int i = 0; i < lambdas.size();++i){
+
+            for (int i = 0; i < lambdas.size();++i)
                 calculateOneLambdaNoStokes(i);
+
+            //Lambertian light source
+            if (ifLambertian){
+                for (int i = 0; i < lambdas.size();++i)
+                    for(int j = 0; j < transmissions.size(); ++j)
+                        for(int k = 0; k < transmissions[i].size(); ++k)
+                            transEachLambda[i][j][k]*=cos(std::get<0>(inAngles[j][k]));
+            }
+
+            //calculate multi-wavelength transmissions
+            for (int i = 0; i < lambdas.size();++i)
                 for(int j = 0; j < transmissions.size(); ++j)
                     for(int k = 0; k < transmissions[j].size(); ++k)
-                        transmissions[j][k] += transTemp[j][k] * lightSourceSpectrum[i] * yBarOfLambda[i] * step_lambda;
+                        transmissions[j][k] += transEachLambda[i][j][k] * lightSourceSpectrum[i] * yBarOfLambda[i] * step_lambda;
 
-            }
             for(int i = 0; i < transmissions.size(); ++i)
                 for(int j = 0; j < transmissions[i].size(); ++j)
                     transmissions[i][j]/=denominator;
-            if (ifLambertian){
-                for(int i = 0; i < transmissions.size(); ++i)
-                    for(int j = 0; j < transmissions[i].size(); ++j)
-                        transmissions[i][j]*=cos(std::get<0>(inAngles[i][j]));
-            }
         }
     }
 }
 
 void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
-    resetTransTemp();
     //assuming incident from air
     double lastn = nAir;
     double ts = 1.0, tp = 1.0;
@@ -136,8 +143,8 @@ void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
                 tMat << (2.0*lastn*cos(theta_i)/(lastn*cos(theta_i)+nAir*cos(theta_r))),0,0,
                         (2.0*lastn*cos(theta_i)/(lastn*cos(theta_r)+nAir*cos(theta_i)));
                 M=tMat*M;
-                  //put tramissions into transTemp first
-                transTemp[i][j]=0.5*(pow(std::abs(M(0,0)),2.0)+pow(std::abs(M(0,1)),2.0)
+                  //put tramissions into transEachLambda first
+                transEachLambda[iLambda][i][j]=0.5*(pow(std::abs(M(0,0)),2.0)+pow(std::abs(M(0,1)),2.0)
                 +pow(std::abs(M(1,0)),2.0)+pow(std::abs(M(1,1)),2.0));
         }
 }
@@ -145,7 +152,7 @@ void ExtendedJones::calculateOneLambdaNoStokes(int iLambda){
 void ExtendedJones::calculateOneLambdaWithStokes(int iLambda){
     //If the program comes here, it means there is at least one polarizer and its theta angle approaches to 90 or 270 degree.
     //assuming incident from air
-    resetTransTemp();
+    resetTransEachLambda();
     double lastn = nAir;
     double ts = 1.0, tp = 1.0;
     double lambda = lambdas[iLambda];
@@ -172,8 +179,8 @@ void ExtendedJones::calculateOneLambdaWithStokes(int iLambda){
             tMat << (2.0*lastn*cos(theta_i)/(lastn*cos(theta_i)+nAir*cos(theta_r))),0,0,
                     (2.0*lastn*cos(theta_i)/(lastn*cos(theta_r)+nAir*cos(theta_i)));
             M=tMat*M;
-              //put tramissions into transTemp first
-            transTemp[i][j]=0.5*(pow(std::abs(M(0,0)),2.0)+pow(std::abs(M(0,1)),2.0)
+              //put tramissions into transEachLambda first
+            transEachLambda[iLambda][i][j]=0.5*(pow(std::abs(M(0,0)),2.0)+pow(std::abs(M(0,1)),2.0)
             +pow(std::abs(M(1,0)),2.0)+pow(std::abs(M(1,1)),2.0));
 
             Eigen::Vector2cd polar = lightPolar.back();
@@ -207,9 +214,9 @@ void ExtendedJones::resetTransmissions(){
     transmissions = DOUBLEARRAY2D(inAngles.size(), DOUBLEARRAY1D(inAngles[0].size(), 0.0));
 }
 
-void ExtendedJones::resetTransTemp(){
-    transTemp.clear();
-    transTemp = DOUBLEARRAY2D(inAngles.size(), DOUBLEARRAY1D(inAngles[0].size(), 0.0));
+void ExtendedJones::resetTransEachLambda(){
+    transEachLambda.clear();
+    transEachLambda = std::vector<TRANSRESULT>(lambdas.size(), DOUBLEARRAY2D(inAngles.size(), DOUBLEARRAY1D(inAngles[0].size(), 0.0)));
 }
 void ExtendedJones::resetStokes(){
     stokes.clear();
@@ -217,7 +224,7 @@ void ExtendedJones::resetStokes(){
         std::vector<STOKESTRACE>(inAngles[0].size())));
 }
 
-void ExtendedJones::resetToCalculateWithNewDiretors(DIRVEC _in){
+void ExtendedJones::resetLCDiretors(DIRVEC _in){
     if (lcLayerindex >= 0){
         LCDOptics::Optical2x2UnixialPtr tempLayerPtr;
         tempLayerPtr = std::dynamic_pointer_cast<LCDOptics::Optical2X2OneLayer<LCDOptics::UniaxialType>,

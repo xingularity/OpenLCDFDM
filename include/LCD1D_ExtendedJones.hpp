@@ -47,11 +47,11 @@ namespace LCD1D{
         ///main function to calculate extended Jones.
         void calculateExtendedJones();
         ///return the transmission results
-        const TRANSRESULT& getTransmissions();
+        const DOUBLEARRAY2D& getTransmissions();
         ///return the results of stokes values
         const STOKESRESULT& getStokes();
         ///reset directors in materials and the states of computing components to calculate optics based on input directors.
-        void resetToCalculateWithNewDiretors(DIRVEC _in);
+        void resetLCDiretors(DIRVEC _in);
         ///return if this object calculates stokes values
         bool isCalcStokes()const {return ifCalcStokes;}
     private:
@@ -64,12 +64,12 @@ namespace LCD1D{
         ///for multi-wavelength calculation
         void calculateManyLambda();
         void resetTransmissions();
-        void resetTransTemp();
+        void resetTransEachLambda();
         void resetStokes();
         ///results of transmissions on corresponding angles in inAngles
-        TRANSRESULT transmissions;
-        ///temporary array for transmission results of one wave length for multi-wavelength calculation.
-        TRANSRESULT transTemp;
+        DOUBLEARRAY2D transmissions;
+        ///array of transmission results of every wavelength
+        std::vector<DOUBLEARRAY2D> transEachLambda;
         ///store the stokes values
         STOKESRESULT stokes;
         ///if user wanna calculate Stokes

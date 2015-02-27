@@ -19,6 +19,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <omp.h>
 #include "../../include/LCD1D_ExtendedJones.hpp"
 #include "../../include/LCD_UsefulFuncs.hpp"
 
@@ -26,6 +27,8 @@ using namespace std;
 using namespace LCDOptics;
 using namespace LCD1D;
 using namespace LCD;
+
+int ompNumThreads = 0;
 
 LIGHTSPECTRUMDATA ReadLightSourceSpectrum(std::string _filename){
     LIGHTSPECTRUMDATA lightSrc;
@@ -153,6 +156,7 @@ void calculateAndOutput(std::string output_prefix, MATERIALLAYERS2X2CONT materia
     //start to calculate single wavelength case
     ExtendedJones extj(materials, inAngles, 0.55, lightSrc, false, false);
     extj.calculateExtendedJones();
+    extj.setNumThreads(ompNumThreads);
     TRANSRESULT answer = extj.getTransmissions();
     //output to file
     ofstream output((output_prefix + "_SingleWaveLength_0.55um.csv").c_str(), std::fstream::out|std::fstream::trunc);
@@ -165,6 +169,7 @@ void calculateAndOutput(std::string output_prefix, MATERIALLAYERS2X2CONT materia
     //start to calculate multiple wavelength case
     ExtendedJones extj2(materials, inAngles, 0.38, 0.78, 0.01, lightSrc, false, false);
     extj2.calculateExtendedJones();
+    extj2.setNumThreads(ompNumThreads);
     answer = extj2.getTransmissions();
     //output to file
     output.open((output_prefix + "_MultiWaveLength_TestLightSrc.csv").c_str(), std::fstream::out|std::fstream::trunc);
@@ -177,6 +182,7 @@ void calculateAndOutput(std::string output_prefix, MATERIALLAYERS2X2CONT materia
     //start to calculate multiple wavelength case
     ExtendedJones extj3(materials, inAngles, 0.38, 0.78, 0.01, LIGHTSPECTRUMDATA(), false, false);
     extj3.calculateExtendedJones();
+    extj3.setNumThreads(ompNumThreads);
     answer = extj3.getTransmissions();
     //output to file
     output.open((output_prefix + "_MultiWaveLength_EqWhite.csv").c_str(), std::fstream::out|std::fstream::trunc);
@@ -189,6 +195,7 @@ void calculateAndOutput(std::string output_prefix, MATERIALLAYERS2X2CONT materia
     //start to calculate multiple wavelength case with Lambertian light source
     ExtendedJones extj4(materials, inAngles, 0.38, 0.78, 0.01, lightSrc, true, false);
     extj4.calculateExtendedJones();
+    extj4.setNumThreads(ompNumThreads);
     answer = extj4.getTransmissions();
     //output to file
     output.open((output_prefix + "_MultiWaveLength_TestLightSrc_Lambertian.csv").c_str(), std::fstream::out|std::fstream::trunc);
@@ -292,6 +299,10 @@ void testLCWithGlass(){
 }
 
 int main(int argc, char const *argv[]) {
+    std::cout << "omp_get_num_procs() = " << omp_get_num_procs() << std::endl;
+    if (argc > 1){
+        ompNumThreads = atoi(argv[1]);
+    }
     testSingleGlass();
     testCrossPolarizer();
     testLC();

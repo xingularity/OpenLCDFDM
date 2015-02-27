@@ -54,6 +54,8 @@ namespace LCD1D{
         void resetLCDiretors(DIRVEC _in);
         ///return if this object calculates stokes values
         bool isCalcStokes()const {return ifCalcStokes;}
+        ///set number of threads for OpenMP
+        void setNumThreads(int _numThreads);
     private:
         ///If LC layer is sandwiched between 2 polarizer layers with the theta angles of their optical axis equal to 90 or 270 degree, the stokes value can be calculated.
         void checkIfCalcStokes();
@@ -75,6 +77,8 @@ namespace LCD1D{
         ///if user wanna calculate Stokes
         bool ifCalcStokes{false};
         bool ifLambertian{false};
+        ///
+        unsigned int ompNumThreads{0};
     };
 };
 

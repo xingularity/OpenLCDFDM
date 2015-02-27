@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <typeinfo>
+#include <omp.h>
 
 using namespace LCD1D;
 
@@ -98,8 +99,10 @@ void ExtendedJones::calculateExtendedJones(){
             for (int i =0; i < lightSourceSpectrum.size(); ++i)
                 denominator += lightSourceSpectrum[i] * yBarOfLambda[i] * step_lambda;
 
-            for (int i = 0; i < lambdas.size();++i)
+            #pragma omp parallel for
+            for (int i = 0; i < lambdas.size();++i){
                 calculateOneLambdaNoStokes(i);
+            }
 
             //Lambertian light source
             if (ifLambertian){
@@ -231,4 +234,18 @@ void ExtendedJones::resetLCDiretors(DIRVEC _in){
             LCDOptics::Optical2X2OneLayerBase>(matLayers[lcLayerindex]);
         if (tempLayerPtr) tempLayerPtr->resetAxes(_in);
     }
+}
+
+void ExtendedJones::setNumThreads(int _numThreads){
+    unsigned int numProcs = omp_get_num_procs();
+    if (_numThreads > numProcs){
+        ompNumThreads = numProcs;
+    }
+    else if (_numThreads < 0){
+        ompNumThreads = 0;
+    }
+    else{
+        ompNumThreads = _numThreads;
+    }
+    omp_set_num_threads(ompNumThreads);
 }

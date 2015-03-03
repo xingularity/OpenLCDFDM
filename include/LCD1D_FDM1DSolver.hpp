@@ -23,11 +23,7 @@
 
 namespace LCD1D{
     ///Rubbing conditions are tft-side theta, tft-side phi, cf-side theta, total twist.
-    struct LCConditions{
-        double tftTheta;
-        double tftPhi;
-        double cfTheta;
-        double totalTwist;
+    struct LCParamters{
         double epsPara;
         double epsPerp;
         double gamma;
@@ -35,8 +31,18 @@ namespace LCD1D{
         double k22;
         double k33;
     };
-    
+
+    struct RubbingCondition{
+        double tftTheta;
+        double tftPhi;
+        double cfTheta;
+        double totalTwist;
+    };
+
+    class Solver;
+
     class LCDirector{
+        friend class SolverBase;
         public:
             ///Constructor 
             LCDirector(const LCConditions cond_, size_t size_);
@@ -47,11 +53,20 @@ namespace LCD1D{
     };
     
     class Potential{
+        friend class Solver;
         public:
-            Potential(int size);
+            Potential(int size_);
         private:
             
     };
+
+    class SolverBase{
+        SolverBase(LCDirector& lcDirector_, Potential& Potential_);
+    protected:
+        LCDirector& lcDirector;
+        Potential& potential;
+    };
+
 };
 
 #endif

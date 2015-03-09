@@ -21,7 +21,7 @@ The last part is colorimetry calculation. It calculates human color perception b
     3. Pyside
   4. OpenMP
 2. Compiler
-  1.g++(>=4.8), support for C++11.
+  1. g++(>=4.8), support for C++11.
 
 ## License
 This code is distributed under BSD license. please read the LICENSE file in the repository.

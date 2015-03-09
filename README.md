@@ -11,14 +11,17 @@ The first part is to simulate liquid crystal transition under external electric 
 The second part is to simulate polarization change when light propagates through the liquid crystal device. There are two major methods to be applied here, they are extended Jones matrix method and Berreman 4X4 method.
 
 The last part is colorimetry calculation. It calculates human color perception by the light emitted from LCD devices.
-## Libraries
-1. [blitz++](http://sourceforge.net/projects/blitz/)
-2. [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
-3. Python3
-  1. Matplotlib
-  2. Cython
-  3. Pyside
-4. OpenMP
+## Libraries and Compilers
+1. Libraries
+  1. [blitz++](http://sourceforge.net/projects/blitz/)
+  2. [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
+  3. Python3 (>=3.4)
+    1. Matplotlib
+    2. Cython
+    3. Pyside
+  4. OpenMP
+2. Compiler
+  1.g++(>=4.8), support for C++11.
 
 ## License
 This code is distributed under BSD license. please read the LICENSE file in the repository.

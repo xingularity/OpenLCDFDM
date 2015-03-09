@@ -6,11 +6,11 @@ Open source codes are important for creating collaborations, reducing duplicated
 ## Simulation methods
 There are three major parts in the simulation of liquid crystal devices.
 
-The first part is to simulate liquid crystal transition under external electric field, this transition is called Fréedericksz transition. 
+The first part is to simulate liquid crystal transition under external electric field, this transition is called Fréedericksz transition. This part is done by minimizing the Oseen-Frank free energy and solving Poisson's equation.
 
-The second part is to simulate polarization change when light propagates through the liquid crystal device.
+The second part is to simulate polarization change when light propagates through the liquid crystal device. There are two major methods to be applied here, they are extended Jones matrix method and Berreman 4X4 method.
 
-The last part is colorimetry calculation. It calculates human color perception.
+The last part is colorimetry calculation. It calculates human color perception by the light emitted from LCD devices.
 ## Libraries
 1. [blitz++](http://sourceforge.net/projects/blitz/)
 2. [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
@@ -19,6 +19,9 @@ The last part is colorimetry calculation. It calculates human color perception.
   2. Cython
   3. Pyside
 4. OpenMP
+
+## License
+This code is distributed under BSD license. please read the LICENSE file in the repository.
 
 ## References
 1. Optics of Liquid Crystal Display by Pochi Yeh and Claire Gu. ISBN: 0470181761

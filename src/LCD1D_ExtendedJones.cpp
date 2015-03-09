@@ -101,6 +101,7 @@ void ExtendedJones::calculateExtendedJones(){
 
             #pragma omp parallel for
             for (int i = 0; i < lambdas.size();++i){
+                std::cout << omp_get_num_threads() <<std::endl;
                 calculateOneLambdaNoStokes(i);
             }
 
@@ -234,18 +235,4 @@ void ExtendedJones::resetLCDiretors(DIRVEC _in){
             LCDOptics::Optical2X2OneLayerBase>(matLayers[lcLayerindex]);
         if (tempLayerPtr) tempLayerPtr->resetAxes(_in);
     }
-}
-
-void ExtendedJones::setNumThreads(int _numThreads){
-    unsigned int numProcs = omp_get_num_procs();
-    if (_numThreads > numProcs){
-        ompNumThreads = numProcs;
-    }
-    else if (_numThreads < 0){
-        ompNumThreads = 0;
-    }
-    else{
-        ompNumThreads = _numThreads;
-    }
-    omp_set_num_threads(ompNumThreads);
 }

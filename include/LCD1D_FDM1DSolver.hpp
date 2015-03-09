@@ -32,6 +32,7 @@ namespace LCD1D{
         double k33;
     };
 
+    ///Rubbing condition
     struct RubbingCondition{
         double tftTheta;
         double tftPhi;
@@ -39,22 +40,28 @@ namespace LCD1D{
         double totalTwist;
     };
 
-    class Solver;
+    class SolverBase;
 
     class LCDirector{
         friend class SolverBase;
         public:
             ///Constructor 
-            LCDirector(const LCConditions cond_, size_t size_);
+            LCDirector(const LCParamters lcParam_, const RubbingCondition rubbing_, size_t layerNum);
             const getSize()const{return size_;}
             const DIRVEC getDirectors()const {return dir;}
+            void resetLCDirectors();
+            void resetConditions(const LCParamters lcParam_);
+            void resetConditions(const RubbingCondition rubbing_);
         private:
+            LCParamters lcParam;
+            RubbingCondition rubbing;
             LCD::DIRVEC dir;
     };
     
     class Potential{
-        friend class Solver;
+        friend class SolverBase;
         public:
+            ///
             Potential(int size_);
         private:
             
@@ -62,10 +69,14 @@ namespace LCD1D{
 
     class SolverBase{
         SolverBase(LCDirector& lcDirector_, Potential& Potential_);
+        ///move one step forward.
+        virtual void calculate() = 0;
     protected:
         LCDirector& lcDirector;
         Potential& potential;
     };
+
+    
 
 };
 

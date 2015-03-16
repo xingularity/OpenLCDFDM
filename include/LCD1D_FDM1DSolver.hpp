@@ -22,6 +22,11 @@
 #include "LCD_ContainerDefine.hpp"
 
 namespace LCD1D{
+    class SolverBase;
+    class PotentialSolver1D;
+    class LCSolver;
+    class TimeWaveform;
+    
     ///Rubbing conditions are tft-side theta, tft-side phi, cf-side theta, total twist.
     struct LCParamters{
         double epsPara;
@@ -40,44 +45,57 @@ namespace LCD1D{
         double totalTwist;
     };
 
-    class SolverBase;
-
     class LCDirector{
-        friend class SolverBase;
+        friend class LCSolver;
         public:
             ///Constructor 
             LCDirector(const LCParamters lcParam_, const RubbingCondition rubbing_, size_t layerNum);
-            const getSize()const{return size_;}
-            const DIRVEC getDirectors()const {return dir;}
+            const getSize()const{return dir.size();}
+            const DIRVEC getDirectors()const {return lcDir;}
             void resetLCDirectors();
             void resetConditions(const LCParamters lcParam_);
             void resetConditions(const RubbingCondition rubbing_);
         private:
             LCParamters lcParam;
             RubbingCondition rubbing;
-            LCD::DIRVEC dir;
+            LCD::DIRVEC lcDir;
     };
     
     class Potential{
-        friend class SolverBase;
+        friend class PotentialSolver1D;
         public:
-            ///
-            Potential(int size_);
+            ///const
+            Potential(size_t size_);
+            const getSize()
         private:
             
     };
 
     class SolverBase{
-        SolverBase(LCDirector& lcDirector_, Potential& Potential_);
+        public:
         ///move one step forward.
-        virtual void calculate() = 0;
-    protected:
-        LCDirector& lcDirector;
-        Potential& potential;
+        virtual void update() = 0;
     };
 
-    
+    class PotentialSolver1D:public SolverBase{
+        public:
+        PotentialSolver1D(Potnetial& pot_, LCDirector& lcDir_);
+        virtual void update();
 
+        protected:
+        Potential& potentials;
+        LCDirector& lcDir;
+    };
+
+    class LCSovler:public SolverBase{
+        public:
+        LCSolver(Potnetial& pot_, LCDirector& lcDir_);
+        virtual void update();
+        
+        protected:
+        Potential& potentials;
+        LCDirector& lcDir;
+    }
 };
 
 #endif

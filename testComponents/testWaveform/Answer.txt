@@ -1,0 +1,13 @@
+test DCWaveform
+10 ms: 5
+10 ms: 3, 12ms:-5.2
+test StepWaveform
+print profile: 
+0: 5
+2.7: -4.5
+7: 0.3
+9.2: -0.5
+No ampShift and no pre apply
+0 ms: 5, 2.8ms:-4.5, 3.3ms: -4.5, 7.2ms: 0.3, 9.7ms: -0.5, 12.7ms: -0.5, 24.9ms: -0.5, 27.8ms: -4.5
+ampShift=2.0 and preApplyTime=10, preApplyVal=3.0
+0 ms: 3, 5 ms: 3, 12.6ms:7, 13.3ms: -2.5, 17.2ms: 2.3, 19.7ms: 1.5, 22.7ms: 1.5, 34.9ms: 1.5, 37.6ms: 7, 60.5 ms: 7

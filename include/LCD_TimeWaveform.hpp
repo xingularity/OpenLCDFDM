@@ -19,12 +19,8 @@
 #ifndef LCD_TIMEWAVEFORM_HPP
 #define LCD_TIMEWAVEFORM_HPP
 
-#include "blitz/array.h"
 #include "LCD_ContainerDefine.hpp"
-#include <eigen3/Eigen/Dense>
-#include <vector>
-#include <complex>
-#include <cmath>
+#include <map>
 
 namespace LCD{
     enum WaveformType{
@@ -42,7 +38,7 @@ namespace LCD{
         double preApplyVal{0.0};
         WaveformType waveType;
     };
-    
+
     class DCWaveform:public WaveformBase{
         public:
         DCWaveform(double val, double _preApplyTime=0.0, double _preApplyVal=0.0);
@@ -53,15 +49,15 @@ namespace LCD{
 
     class StepWaveform:public WaveformBase{
         public:
-        StepWaveform(std::map<double, double> _prof, double _period, double _ampShift, double _preApplyTime = 0.0, double _preApplyVal=0.0);
+        StepWaveform(std::map<double, double> _prof, double _period, double _ampShift=0.0, double _preApplyTime = 0.0, double _preApplyVal=0.0);
         virtual double operator()(double t);
+        DOUBLEARRAY2D getStepProfile();
         protected:
         double wavePeriod{0.0};
         int stepNum{0};
         DOUBLEARRAY2D prof;
         double ampShift{0.0};
     };
-    
 };
 
 #endif

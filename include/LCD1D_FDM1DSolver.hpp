@@ -20,13 +20,15 @@
 #define LCD1D_FDM1DSOLVER_HPP
 
 #include "LCD_ContainerDefine.hpp"
+#include "LCD_TimeWaveform.hpp"
+#include <memory>
 
 namespace LCD1D{
     class SolverBase;
     class PotentialSolver1D;
     class LCSolver;
     class TimeWaveform;
-    
+
     ///Rubbing conditions are tft-side theta, tft-side phi, cf-side theta, total twist.
     struct LCParamters{
         double epsPara;
@@ -47,55 +49,58 @@ namespace LCD1D{
 
     class LCDirector{
         friend class LCSolver;
-        public:
-            ///Constructor 
-            LCDirector(const LCParamters lcParam_, const RubbingCondition rubbing_, size_t layerNum);
-            const getSize()const{return dir.size();}
-            const DIRVEC getDirectors()const {return lcDir;}
-            void resetLCDirectors();
-            void resetConditions(const LCParamters lcParam_);
-            void resetConditions(const RubbingCondition rubbing_);
-        private:
-            LCParamters lcParam;
-            RubbingCondition rubbing;
-            LCD::DIRVEC lcDir;
+    public:
+        ///Constructor
+        LCDirector(const LCParamters lcParam_, const RubbingCondition rubbing_, size_t layerNum);
+        const getSize()const{return dir.size();}
+        const DIRVEC getDirectors()const {return lcDir;}
+        void resetLCDirectors();
+        void resetConditions(const LCParamters lcParam_);
+        void resetConditions(const RubbingCondition rubbing_);
+    private:
+        LCParamters lcParam;
+        RubbingCondition rubbing;
+        LCD::DIRVEC lcDir;
     };
-    
+
     class Potential{
         friend class PotentialSolver1D;
-        public:
-            ///const
-            Potential(size_t size_);
-            const getSize()
-        private:
-            
+    public:
+        ///const
+        Potential(size_t size_);
+        const getSize();
+    private:
+
     };
 
     class SolverBase{
-        public:
+    public:
+        SolverBase(){};
+        SolverBase(double _dt):dt(_dt){};
         ///move one step forward.
-        virtual void update() = 0;
+        virtual void update(double t) = 0;
+    protected:
+        double dt{0.0};
     };
 
     class PotentialSolver1D:public SolverBase{
-        public:
-        PotentialSolver1D(Potnetial& pot_, LCDirector& lcDir_);
-        virtual void update();
-
-        protected:
+    public:
+        PotentialSolver1D(Potnetial& pot_, LCDirector& lcDir_, std::shared_ptr<WaveformBase> voltWavePtr_ = std::shared_ptr<LCD::WaveformBase>());
+        virtual void update(double t);
+    protected:
         Potential& potentials;
         LCDirector& lcDir;
+        std::shared_ptr<LCD::WaveformBase> voltWavePtr;
     };
 
     class LCSovler:public SolverBase{
-        public:
+    public:
         LCSolver(Potnetial& pot_, LCDirector& lcDir_);
-        virtual void update();
-        
-        protected:
+        virtual void update(double t);
+    protected:
         Potential& potentials;
         LCDirector& lcDir;
-    }
+    };
 };
 
 #endif

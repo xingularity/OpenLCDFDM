@@ -20,6 +20,7 @@
 #include <fstream>
 #include <iomanip>
 #include <omp.h>
+#include <ctime>
 #include "../../include/LCD1D_ExtendedJones.hpp"
 #include "../../include/LCD_UsefulFuncs.hpp"
 
@@ -236,6 +237,7 @@ void testCrossPolarizer(){
 }
 
 void testLC(){
+    std::cout << "Start to calculate LC no glass case..." << std::endl;
     DIRVEC dirVec;
     ReadLCDirectors("TN_Director.txt", dirVec);
     LIGHTSPECTRUMDATA lightSrc = ReadLightSourceSpectrum("TestLightSrc.csv");
@@ -264,6 +266,7 @@ void testLC(){
 }
 
 void testLCWithGlass(){
+    std::cout << "Start to calculate LC with glass case..." << std::endl;
     DIRVEC dirVec;
     ReadLCDirectors("TN_Director.txt", dirVec);
     NKData nkSpectrum = ReadIsotropicNKData("TestGlassNKSpectrum.csv");
@@ -295,6 +298,8 @@ void testLCWithGlass(){
 }
 
 int main(int argc, char const *argv[]) {
+    time_t start_time, end_time, diff_time;
+    std::time(&start_time);
     std::cout << "omp_get_num_procs() = " << omp_get_num_procs() << std::endl;
     if (argc > 1){
         ompNumThreads = atoi(argv[1]);
@@ -304,5 +309,8 @@ int main(int argc, char const *argv[]) {
     testCrossPolarizer();
     testLC();
     testLCWithGlass();
+    std::time(&end_time);
+    diff_time = std::difftime(end_time, start_time);
+    std::cout << "Total time consumed: " << diff_time << "(s)" << std::endl;
     return 0;
 }

@@ -101,7 +101,6 @@ void ExtendedJones::calculateExtendedJones(){
 
             #pragma omp parallel for
             for (int i = 0; i < lambdas.size();++i){
-                std::cout << omp_get_num_threads() <<std::endl;
                 calculateOneLambdaNoStokes(i);
             }
 

@@ -41,8 +41,8 @@ COMPD Optical2X2OneLayer<ISOType>::findNK(double lambda){
 double Optical2X2OneLayer<ISOType>::calcJonesMatrix(JONESMAT& M, Angle& iang, double lambda, double lastn){
     double ts=0.0, tp=0.0;
     double nAvg = findNK(lambda).real();
-    const double& theta_i = std::get<0>(iang);
-    const double& phi = std::get<1>(iang);
+    double theta_i, phi;
+    std::tie(theta_i, phi) = iang;
     //refraction angle
     double theta_r = std::asin(lastn*sin(theta_i)/nAvg);
     EigenM22 tMat;
@@ -59,8 +59,8 @@ double Optical2X2OneLayer<ISOType>::calcJonesMatrix(JONESMAT& M, POLARTRACE& lig
 Angle& iang, double lambda, double lastn){
     double ts=0.0, tp=0.0;
     double nAvg = findNK(lambda).real();
-    const double& theta_i = std::get<0>(iang);
-    const double& phi = std::get<1>(iang);
+    double theta_i, phi;
+    std::tie(theta_i, phi) = iang;
     //refraction angle
     double theta_r = std::asin(lastn*sin(theta_i)/nAvg);
     EigenM22 tMat;
@@ -97,13 +97,13 @@ NKoNKe Optical2X2OneLayer<UniaxialType>::findNK(double lambda){
 double Optical2X2OneLayer<UniaxialType>::calcJonesMatrix(JONESMAT& M, Angle& iang, double lambda, double lastn){
     if (axisVec.size() < 1) throw runtime_error("No optical axis data! reported in Optical2X2OneLayer<UniaxialType>::calcJonesMatrix");
     NKoNKe nn = findNK(lambda);
-    const COMPD& no = std::get<0>(nn);
-    const COMPD& ne = std::get<1>(nn);
+    COMPD no, ne;
+    std::tie(no, ne)=nn;
     //double nAvg = no.real()*2.0/3.0 + ne.real()/3.0;
     double nAvg = no.real();
+    double theta_i, phi;
+    std::tie(theta_i, phi) = iang;
 
-    const double& theta_i = std::get<0>(iang);
-    const double& phi = std::get<1>(iang);
     double theta_r=asin(lastn*sin(theta_i)/nAvg);
 
     //tangential part of k, reference to Dr. Pochi Yeh's book
@@ -181,13 +181,13 @@ double Optical2X2OneLayer<UniaxialType>::calcJonesMatrix(JONESMAT& M, Angle& ian
 double Optical2X2OneLayer<UniaxialType>::calcJonesMatrix(JONESMAT& M,
 POLARTRACE& lightPolar, Angle& iang, double lambda, double lastn){
     NKoNKe nn = findNK(lambda);
-    const COMPD& no = std::get<0>(nn);
-    const COMPD& ne = std::get<1>(nn);
+    COMPD no, ne;
+    std::tie(no, ne)=nn;
     //double nAvg = no.real()*2.0/3.0 + ne.real()/3.0;
     double nAvg = no.real();
 
-    const double& theta_i = std::get<0>(iang);
-    const double& phi = std::get<1>(iang);
+    double theta_i, phi;
+    std::tie(theta_i, phi) = iang;
     double theta_r=asin(lastn*sin(theta_i)/nAvg);
 
     //tangential part of k, reference to Dr. Pochi Yeh's book

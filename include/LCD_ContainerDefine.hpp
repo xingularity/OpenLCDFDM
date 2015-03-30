@@ -50,7 +50,6 @@ namespace LCD{
     using DOUBLEARRAY2D = std::vector<std::vector<double> >;
     using LONGARRAY1D = std::vector<long> ;
     using COMPLEXDARRAY1D = std::vector<COMPD> ;
-
 };
 
 #endif

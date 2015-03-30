@@ -19,11 +19,16 @@
 #ifndef LCD1D_FDM1DSOLVER_HPP
 #define LCD1D_FDM1DSOLVER_HPP
 
+#include "LCD_ConstantDefine.hpp"
 #include "LCD_ContainerDefine.hpp"
 #include "LCD_TimeWaveform.hpp"
 #include <memory>
 
 namespace LCD1D{
+    using LCD::DIRVEC;
+    using LCD::DOUBLEARRAY1D;
+    using LCD::BzVECD3D;
+
     class SolverBase;
     class PotentialSolver1D;
     class LCSolver;
@@ -32,17 +37,18 @@ namespace LCD1D{
     ///Rubbing conditions are tft-side theta, tft-side phi, cf-side theta, total twist.
     struct LCParamters{
         double thick;
-        double epsPara;
-        double epsPerp;
+        double epsr_para;
+        double epsr_perp;
         double gamma;
         double k11;
         double k22;
         double k33;
+        double q0;
     };
 
     struct DielecParameters{
         double thick;
-        double eps;
+        double epsr;
     };
 
     ///Rubbing condition
@@ -54,42 +60,49 @@ namespace LCD1D{
     };
 
     /**
-    This class only records the epsilon distribution in LC.
-    Epsilon values of tftpi & cfpi are recorded with the values only.
+    This class only records the epsilon distribution in LC. <br/>
+    Epsilon values of tftpi & cfpi are recorded with the values only. <br/>
+    Note: <br/>
+    EPS0 is in the unit of pF/m^2. Capacitance per unit area is calculated to be in the unit of
+    1.0e-10 F/cm^2 with dz given in the unit of um.
+    All the record capacitance values in this class are in the unit of 1.0e-10F/cm^2. <br/>
     */
     class Epsilon{
     public:
-        Epsilon(size_t _lc_layernum){lcLayerNum=_lc_layernum;}
+        Epsilon(size_t _lc_layernum, double _dz){lcLayerNum=_lc_layernum; epsr33.resize(lcLayerNum); dz=_dz}
         ///set TFTPI parameters
-        void setTFTPI(DielecParameters _param){tftpi_eps = _param.eps; tftpiThick = _param.thick;}
+        void setTFTPI(DielecParameters _param){tftpi_epsr = _param.epsr; tftpiThick = _param.thick;}
         ///set CFPI parameters
-        void setCFPI(DielecParameters _param){cfpi_eps = _param.eps; cfpiThick = _param.thick;}
+        void setCFPI(DielecParameters _param){cfpi_epsr = _param.epsr; cfpiThick = _param.thick;}
         ///get epsilon distribution in LC
-        DOUBLEARRAY1D getLCEpsilon()const{return eps33;}
+        DOUBLEARRAY1D getLCEpsr33()const{return epsr33;}
+        ///update epsr_33 in LC
+        void updateEpsilonr(const double& epsr_para, const double& eps_perp, const DIRVEC dirs);
         ///get epsilon distribution in LC
-        DOUBLEARRAY1D& getLCEpsilon(){return eps33;}
-        ///get epsilon with an index in LC
-        double& getLCEpsilon(size_t i){return eps33[i];}
-        ///get epsilon with an index in LC
-        double getLCEpsilon(size_t i)const{return eps33[i];}
-        /// calculate cell capacitance, units in pF/cm^2
-        double calculateCapacitance(double dz) const ;
-        ///get TFTPI capacitance, units in pF/cm^2
-        double getTFTCapcitance()const {return tftCap;}
-        ///get CFPI capacitance, units in pF/cm^2
-        double getCFCapcitance()const {return cfCap;}
-
+        DOUBLEARRAY1D& getLCEpsr33(){return epsr33;}
+        /// calculate cell capacitance, in the unit of 1.0e-10F/cm^2
+        double getLCLayerCapacitance()const{return lcCap;}
+        ///get TFTPI capacitance, the unit is 1.0e-10F/cm^2
+        double getTFTCapcitance()const {return tftpiThick/tftpi_epsr;}
+        ///get CFPI capacitance, the unit is 1.0e-10F/cm^2
+        double getCFCapcitance()const {return cfpiThick/cfpi_epsr;}
+        ///get the voltage B.C. for the LC layer.
+        double getLCVoltRatio()const;
     private:
+        /// calculate LC cell capacitance, in the unit of 1.0e-10F/cm^2
+        void calculateCapacitance() const;
         size_t lcLayerNum{0};
-        DOUBLEARRAY1D eps33;
-        double tftpi_eps{0.0};
-        double cfpi_eps{0.0};
+        double dz{0.0};
+        ///eps33 in the LC layer.
+        DOUBLEARRAY1D epsr33;
+        double tftpi_epsr{0.0};
+        double cfpi_epsr{0.0};
         double tftpiThick{0.0};
         double cfpiThick{0.0};
-        ///capacitance of tftpi
-        double tftCap{0.0};
-        ///capacitance of cfpi
-        double cfCap{0.0};
+        ///capacitance for LC layer
+        double lcCap{0.0};
+        ///get total capacitance
+        double totalCap{0.0};
     };
 
     /**
@@ -101,28 +114,26 @@ namespace LCD1D{
         friend UpdatePolicy;
     public:
         ///Constructor
-        LCDirector(const LCParamters _lcParam, const RubbingCondition _rubbing, Epsilon& _epsilion);
-        size_t getSize()const{return dir.size();}
+        LCDirector(size_t _lcLayerNum, const LCParamters _lcParam, const RubbingCondition _rubbing, Epsilon& _epsilion);
+        size_t getSize()const{return dir.extent(0);}
         const DIRVEC getDirectors()const {return lcDir;}
         LCParamters getLCParams()const {return lcParam;}
         RubbingCondition getLCRubbing()const {return rubbing;}
         double getDirectors(int iz, int i)const {return lcDir(iz)(i);}
         const BzVECD3D getDirectors(int iz)const {return lcDir(iz);}
-        const DOUBLEARR1D& getEps33()const {return eps33;}
         ///reset LC directors according to the rubbing BC.
         void resetLCDirectors();
         ///reset LC parameters
         void resetConditions(const LCParamters _lcParam);
         ///reset rubbing conditions
         void resetConditions(const RubbingCondition _rubbing);
-        ///
     private:
         ///LC parameters
         LCParamters lcParam;
         ///rubbing conditions
         RubbingCondition rubbing;
         ///LC directors
-        LCD::DIRVEC lcDir;
+        DIRVEC lcDir;
         ///epsilon values
         Epsilon& epsilon;
         ///The functor used to update LC directors
@@ -132,34 +143,44 @@ namespace LCD1D{
     ///only for potentials in LC, potentials between pi and LC will be calculated with capacitance.
     template <class UpdatePolicy>
     class Potential{
-        friend class UpdatePolicy;
+        friend UpdatePolicy;
     public:
-        Potential(size_t size_, const Epsilon& epsilon);
-        const getSize();
-        const DOUBLEARRAY1D getPotentials()const ;
-        DOUBLEARRAY1D getPotentials();
-        const double& getPotentials(size_t i)const;
+        Potential(size_t _size, const Epsilon& _epsilons);
+        const getSize(){return potential.size();}
+        DOUBLEARRAY1D getPotentials()const{return potential;}
+        const double& getPotentials(size_t i)const{return potential[i];}
+        const DOUBLEARRAY1D& getEfieldForLC()const{return EFieldForLC;}
         void update(double t);
+        void changeBCVolt(double volt);
     private:
         ///epsilons
         const Epsilon& epsilons;
         /// potnetials inside LC
         DOUBLEARRAY1D potential;
-        ///The functor used to update potentials
+        /// electric fields on grid points for LC update, arranged in the same index with LC directors.
+        DOUBLEARRAY1D EFieldForLC;
+        /// The functor used to update potentials
         std::shared_ptr<UpdatePolicy> potentialUpdater;
     };
 
+    /**
+    This class serves as UpdatePolicy of Potential to update potentials and B.C. can be changed through a member function.
+    */
     class PotentialSolversForStatic{
     public:
-        PotentialSolver1D(Potnetial& _pot, LCDirector& _lcDir, double _dz, DielecParameters _tftpi, DielecParameters _cfpi);
-        void changeBCVolt(double _dc);
-        void update(double t);
+        PotentialSolver1D(Potnetial& _pot, const Epsilon& _epsilons, double _dz);
+        ///input voltage on the cell boundary
+        void update(double volt);
     protected:
         double dz{0.0};
         Potential& potentials;
-        Epsilon& epsilon;
+        const Epsilon& epsilon;
     };
 
+    /**
+    This class serves as UpdatePolicy of Potential to update potentials and it uses a Waveform objects to 
+    decides BC.
+    */
     class PotentialSolversForDynamic{
     public:
         PotentialSolver1D(Potnetial& _pot, LCDirector& _lcDir, double _dz, DielecParameters _tftpi,
@@ -174,25 +195,58 @@ namespace LCD1D{
 
     class LCSolverBase{
     public:
-        void changeLCParams(LCParamters _param){lcParam = _param;}
+        void changeLCParams(LCParamters _param){
+            k11 = _param.k11;
+            k22 = _param.k22;
+            k33 = _param.k33;
+            epsr_para = _param.epsr_para;
+            epsr_perp = _param.epsr_perp;
+            delta_epsr = epsr_para - epsr_perp;
+            gamma = _param.gamma;
+            q0 = _param.q0;
+        }
+        void change_dz(double _dz){dz = _dz;}
+        void change_dt(double _dt){dt = _dt;}
     protected:
-        LCSolverBase(Potnetial& _pot, LCDirector& _lcDir, LCParamters _lcParam, double _dz, double _dt);
+        LCSolverBase(const Potnetial& _pot, LCDirector& _lcDir, Epsilon& _epsilonr, LCParamters _lcParam
+            , double _dz, double _dt):epsilonr(_epsilonr), lcParam(_lcParam), potentials(_pot), lcDir(_lcDir), dz(_dz), dt(_dt){
+                tempDir.resizeAndPreserve(lcDir.getSize());
+            }
+        void updateEpsilonr();
         double dz;
         double dt;
-        DOUBLEARR1D temp;
+        double k11;
+        double k22;
+        double k33;
+        double epsr_para;
+        double epsr_perp;
+        double delta_epsr;
+        double gamma;
+        double q0;
+        /// tempararily put new directors.
+        DIRVEC tempDir;
         ///LC parameters
         LCParamters lcParam;
-        Potential& potentials;
+        const Potential& potentials;
         LCDirector& lcDir;
-    }
+        Epsilon& epsilonr;
+    };
 
+    /**
+    This class serves as UpdatePolicy of LCDirector to update LC directors one step forward with the vetor form calculation.
+    */
     class LCVecUpdate:public LCSolverBase{
     public:
-        LCSolver(Potnetial& _pot, LCDirector& _lcDir, LCParamters _lcParam, double _dz, double _dt):
-            LCSolverBase(_pot, _lcDir, _lcParam, _dz, _dt){}
-        void update(double t);
-        double residuals();
+        LCSolver(const Potnetial& _pot, LCDirector& _lcDir, LCParamters _lcParam, double _dz, double _dt):
+            LCSolverBase(_pot, _lcDir, _lcParam, _dz, _dt){
+                temp.resizeAndPreserve(lcDir.getSize());
+            }
+        ///return the residual, it is defined the maximum error of one director component among directors
+        double update();
     };
+    protected:
+        /// temp data for variation calculations.
+        DIRVEC temp;
 };
 
 #endif

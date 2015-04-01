@@ -23,16 +23,20 @@
 #include "LCD_ContainerDefine.hpp"
 #include "LCD_TimeWaveform.hpp"
 #include <memory>
+#include <stdexcept>
 
 namespace LCD1D{
     using LCD::DIRVEC;
     using LCD::DOUBLEARRAY1D;
     using LCD::BzVECD3D;
 
-    class SolverBase;
-    class PotentialSolver1D;
-    class LCSolver;
-    class TimeWaveform;
+    class LCSolverBase;
+    class Epsilon;
+    class Potential;
+    class LCDirector;
+    class PotentialSolversForStatic;
+    class PotentialSolversForDynamic;
+    class LCVecUpdater;
 
     ///Rubbing conditions are tft-side theta, tft-side phi, cf-side theta, total twist.
     struct LCParamters{
@@ -114,19 +118,35 @@ namespace LCD1D{
         friend UpdatePolicy;
     public:
         ///Constructor
-        LCDirector(size_t _lcLayerNum, const LCParamters _lcParam, const RubbingCondition _rubbing, Epsilon& _epsilion);
+        LCDirector(size_t _lcLayerNum, const LCParamters _lcParam, const RubbingCondition _rubbing, 
+            Epsilon& _epsilionr):lcParam(_lcParam), rubbing(_rubbing), epsilonr(_epsilonr){
+            
+            lcDir.resizeAndPreserve(_lcLayerNum+1);
+            this->resetDirectors();
+        }
         size_t getSize()const{return dir.extent(0);}
+        size_t getLayerNum()const{return dir.extent(0) - 1;}
         const DIRVEC getDirectors()const {return lcDir;}
         LCParamters getLCParams()const {return lcParam;}
         RubbingCondition getLCRubbing()const {return rubbing;}
         double getDirectors(int iz, int i)const {return lcDir(iz)(i);}
         const BzVECD3D getDirectors(int iz)const {return lcDir(iz);}
         ///reset LC directors according to the rubbing BC.
-        void resetLCDirectors();
+        void resetLCDirectors(){
+            size_t layerNum = lcDir.extent(0)-1;
+            double dtheta = (lcParam.cfTheta - lcParam.tftTheta)/layerNum;
+            double dphi = lcParam.totalTwis/layerNum;
+            for (int i = 0; i < layerNum + 1; ++i){
+                lcDir(i)(0) = std::sin(rubbing.tftTheta + i*dtheta)*std::cos(rubbing.tftPhi + i*dphi);
+                lcDir(i)(1) = std::sin(rubbing.tftTheta + i*dtheta)*std::sin(rubbing.tftPhi + i*dphi);
+                lcDir(i)(2) = std::cos(rubbing.tftTheta + i*dtheta);
+            }
+            epeilonr.updateEpsilonr(lcParam.epsr_para, lcParam.epsr_perp, lcDir);
+        }
         ///reset LC parameters
-        void resetConditions(const LCParamters _lcParam);
+        void resetConditions(const LCParamters _lcParam){lcParam = _lcParam;}
         ///reset rubbing conditions
-        void resetConditions(const RubbingCondition _rubbing);
+        void resetConditions(const RubbingCondition _rubbing){rubbing = _rubbing;}
     private:
         ///LC parameters
         LCParamters lcParam;
@@ -135,7 +155,7 @@ namespace LCD1D{
         ///LC directors
         DIRVEC lcDir;
         ///epsilon values
-        Epsilon& epsilon;
+        Epsilon& epsilonr;
         ///The functor used to update LC directors
         std::shared_ptr<UpdatePolicy> lcUpdater;
     };
@@ -145,16 +165,19 @@ namespace LCD1D{
     class Potential{
         friend UpdatePolicy;
     public:
-        Potential(size_t _size, const Epsilon& _epsilons);
+        Potential(size_t _size, const Epsilon& _epsilonr):epsilonr(_epsilonr){
+            potential.resize(_size);
+            for(auto& i: potential) i = 0.0;
+        }
         const getSize(){return potential.size();}
         DOUBLEARRAY1D getPotentials()const{return potential;}
         const double& getPotentials(size_t i)const{return potential[i];}
         const DOUBLEARRAY1D& getEfieldForLC()const{return EFieldForLC;}
-        void update(double t);
-        void changeBCVolt(double volt);
+        ///enter the voltage for static calculation and enter time (int ms) for dynamic calculation.
+        void update(double);
     private:
         ///epsilons
-        const Epsilon& epsilons;
+        const Epsilon& epsilonr;
         /// potnetials inside LC
         DOUBLEARRAY1D potential;
         /// electric fields on grid points for LC update, arranged in the same index with LC directors.
@@ -162,6 +185,22 @@ namespace LCD1D{
         /// The functor used to update potentials
         std::shared_ptr<UpdatePolicy> potentialUpdater;
     };
+    
+    template<class UpdatePolicy>
+    Potential<UpdatePolicy>::update(double anything){
+        throw runtime_error("This function can't be called, one must use specialized version.");
+    }
+
+    template<>
+    Potential<PotentialSolversForStatic>::update(double volt){
+        potentialUpdater->update(volt);
+    }
+
+    template<>
+    Potential<PotentialSolversForDynamic>::update(double t){
+        potentialUpdater->update(t);
+    }
+
 
     /**
     This class serves as UpdatePolicy of Potential to update potentials and B.C. can be changed through a member function.
@@ -169,7 +208,7 @@ namespace LCD1D{
     class PotentialSolversForStatic{
     public:
         PotentialSolver1D(Potnetial& _pot, const Epsilon& _epsilons, double _dz);
-        ///input voltage on the cell boundary
+        ///input voltage on the cell boundary, it will be transformed to the voltage BC. on the LC layer.
         void update(double volt);
     protected:
         double dz{0.0};
@@ -235,7 +274,7 @@ namespace LCD1D{
     /**
     This class serves as UpdatePolicy of LCDirector to update LC directors one step forward with the vetor form calculation.
     */
-    class LCVecUpdate:public LCSolverBase{
+    class LCVecUpdater:public LCSolverBase{
     public:
         LCSolver(const Potnetial& _pot, LCDirector& _lcDir, LCParamters _lcParam, double _dz, double _dt):
             LCSolverBase(_pot, _lcDir, _lcParam, _dz, _dt){

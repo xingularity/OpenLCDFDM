@@ -60,7 +60,7 @@ void Epsilon::updateEpsilonr(const double& epsr_para, const double& epsr_perp, c
 		epsr33[i] = epsr_perp + delta_epsr*std::power(std::cos(std::acos(dirs(i)(2)) + std::acos(dirs(i+1)(2))), 2.0);
 }
 
-double LCVecUpdate::update(){
+double LCVecUpdater::update(){
 	//first, put the answer into temp and then swap.
 	double residual=0.0;
 	const DOUBLEARRAY1D& EFieldForLC = potentials.getEfieldForLC();

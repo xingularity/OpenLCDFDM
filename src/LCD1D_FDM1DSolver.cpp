@@ -17,6 +17,8 @@
  */
 
 #include "LCD1D_FDM1DSolver.hpp"
+#include "LCD_UsefulFuncs.hpp"
+#include <stdexcept>
 
 using namespace LCD;
 using namespace LCD1D;
@@ -48,8 +50,14 @@ double Epsilon::getLCVoltRatio()const{
 	}
 }
 
-void Epsilon::updateEpsilonr(const double& epsr_para, const double& eps_perp, const DIRVEC dirs){
-	
+void Epsilon::updateEpsilonr(const double& epsr_para, const double& epsr_perp, const DIRVEC dirs){
+	const double delta_epsr = epsr_para - epsr_perp;
+	double theta1, theta2;
+	if (dirs.extent(0) != (epsr33.size() + 1))
+		throw runtime_error("Sizes of the director container and the eps33 container don't match.\n"
+			+"dirs.extent(0) = " + toString(dirs.extent(0)) + ", espr33.size() = " + toString(espr33.size()));
+	for (int i = 0; i < epsr33.size(); ++i)
+		epsr33[i] = epsr_perp + delta_epsr*std::power(std::cos(std::acos(dirs(i)(2)) + std::acos(dirs(i+1)(2))), 2.0);
 }
 
 double LCVecUpdate::update(){
@@ -114,12 +122,12 @@ double LCVecUpdate::update(){
 
 	//put the advanced directors back to "dirs"
 	dirs.swap(tempDir);
-
+	epsilonr.updateEpsilonr(lcParam.epsr_para, lcParam.epsr_perp, dirs);
 	return residual;
 }
 
 PotentialSolversForStatic::PotentialSolversForStatic(Potnetial& _pot, const Epsilon& _epsilons, double _dz):
-	potentials(_pot), epsilon(_epsilons), dz(_dz){}
+	potentials(_pot), epsilonr(_epsilons), dz(_dz){}
 
 PotentialSolversForStatic::update(double volt){
 

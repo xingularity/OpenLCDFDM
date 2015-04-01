@@ -77,7 +77,7 @@ namespace LCD1D{
         ///get epsilon distribution in LC
         DOUBLEARRAY1D getLCEpsr33()const{return epsr33;}
         ///update epsr_33 in LC
-        void updateEpsilonr(const double& epsr_para, const double& eps_perp, const DIRVEC dirs);
+        void updateEpsilonr(const double& epsr_para, const double& epsr_perp, const DIRVEC dirs);
         ///get epsilon distribution in LC
         DOUBLEARRAY1D& getLCEpsr33(){return epsr33;}
         /// calculate cell capacitance, in the unit of 1.0e-10F/cm^2
@@ -174,7 +174,7 @@ namespace LCD1D{
     protected:
         double dz{0.0};
         Potential& potentials;
-        const Epsilon& epsilon;
+        const Epsilon& epsilonr;
     };
 
     /**
@@ -189,7 +189,7 @@ namespace LCD1D{
     protected:
         double dz{0.0};
         Potential& potentials;
-        Epsilon& epsilon;
+        Epsilon& epsilonr;
         std::shared_ptr<LCD::WaveformBase> voltWavePtr;
     };
 

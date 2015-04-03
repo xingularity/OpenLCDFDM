@@ -23,8 +23,8 @@
 using namespace LCD;
 using namespace LCD1D;
 
-double Epsilon::calculateCapacitance() const {
-	if (espr33.size() == 0) reuturn 0.0;
+double Epsilon::calculateCapacitance() {
+	if (epsr33.size() == 0) return 0.0;
 	double answer=0.0;
 	double piCap_inv=0.0;
 	for (double epsr : epsr33){
@@ -32,7 +32,7 @@ double Epsilon::calculateCapacitance() const {
 	}
 	lcCap = EPS0*1.0/answer;
 	piCap_inv = tftpiThick/tftpi_epsr + cfpiThick/cfpi_epsr;
-	if (std::abs(piCap) < 1.0e-13)
+	if (std::abs(piCap_inv) < 1.0e-13)
 		totalCap = lcCap;
 	else
 		totalCap = 1.0/(piCap_inv + 1.0/lcCap);
@@ -54,16 +54,40 @@ void Epsilon::updateEpsilonr(const double& epsr_para, const double& epsr_perp, c
 	const double delta_epsr = epsr_para - epsr_perp;
 	double theta1, theta2;
 	if (dirs.extent(0) != (epsr33.size() + 1))
-		throw runtime_error("Sizes of the director container and the eps33 container don't match.\n"
-			+"dirs.extent(0) = " + toString(dirs.extent(0)) + ", espr33.size() = " + toString(espr33.size()));
+		throw std::runtime_error("Sizes of the director container and the eps33 container don't match.\n"
+			+ std::string("dirs.extent(0) = ") + toString(dirs.extent(0)) + ", epsr33.size() = " + toString(epsr33.size()));
 	for (int i = 0; i < epsr33.size(); ++i)
-		epsr33[i] = epsr_perp + delta_epsr*std::power(std::cos(std::acos(dirs(i)(2)) + std::acos(dirs(i+1)(2))), 2.0);
+		epsr33[i] = epsr_perp + delta_epsr*std::pow(std::cos(std::acos(dirs(i)(2)) + std::acos(dirs(i+1)(2))), 2.0);
+}
+
+void LCDirector::resetConditions(const LCParamters _lcParam){
+    lcParam = _lcParam;
+    if (!lcUpdater)
+        lcUpdater->changeLCParams(lcParam);
+}
+
+void LCDirector::resetConditions(const RubbingCondition _rubbing){
+    rubbing = _rubbing;
+    resetLCDirectors();
+}
+
+void LCDirector::createVectorFormUpdater(const Potential& _pot, double dt){
+    lcUpdater.reset(new LCVecUpdater(_pot, *this, epsilonr, lcParam, cellgap/layerNum, dt));
+}
+
+LCSolverBase::LCSolverBase(const Potential& _pot, LCDirector& _lcDir, Epsilon& _epsilonr, LCParamters _lcParam
+    , double _dz, double _dt):pot(_pot), epsilonr(_epsilonr), lcParam(_lcParam), lcDir(_lcDir), dz(_dz), dt(_dt){
+        tempDir.resizeAndPreserve(lcDir.getSize());
+}
+
+LCVecUpdater::LCVecUpdater(const Potential& _pot, LCDirector& _lcDir, Epsilon& _epsilonr, LCParamters _lcParam, double _dz, double _dt):
+    LCSolverBase(_pot, _lcDir, _epsilonr, _lcParam, _dz, _dt){
+        temp.resizeAndPreserve(lcDir.getSize());
 }
 
 double LCVecUpdater::update(){
 	//first, put the answer into temp and then swap.
-	double residual=0.0;
-	const DOUBLEARRAY1D& EFieldForLC = potentials.getEfieldForLC();
+	const DOUBLEARRAY1D& EFieldForLC = pot.getEfieldForLC();
 	DIRVEC dirs = lcDir.lcDir; //use copy constructor
 	double nx2=0.0, ny2=0.0, nz2=0.0, dnx=0.0, dny=0.0, dnz=0.0;
 
@@ -88,7 +112,7 @@ double LCVecUpdater::update(){
 	
 		//calculate variation of nz
 		temp(i)(2)=(k11-nz2*k22+k33*nz2)*(dirs(i+1)(2)+dirs(i-1)(2)-2.0*dirs(i)(2))
-			+EPS0*delta_epsr*EFieldForLC(i)*EFieldForLC(i)*dz*dz*dirs(i)(2) //divide dz later
+			+EPS0*delta_epsr*EFieldForLC[i]*EFieldForLC[i]*dz*dz*dirs(i)(2) //divide dz later
 			+0.25*dirs(i)(2)*(k33-k22)*(dnz*dnz-dnx*dnx-dny*dny);
 		temp(i)(2)/=(dz*dz*gamma);
 	}
@@ -121,34 +145,41 @@ double LCVecUpdater::update(){
 	}
 
 	//put the advanced directors back to "dirs"
-	dirs.swap(tempDir);
+	blitz::swap(dirs, tempDir);
 	epsilonr.updateEpsilonr(lcParam.epsr_para, lcParam.epsr_perp, dirs);
 	return residual;
 }
 
-PotentialCalculate:PotentialCalculate(Potnetial& _pot, const Epsilon& _epsilons, double _dz):
-	potentials(_pot), epsilonr(_epsilons), dz(_dz){
+void Potential::update(double volt){potentialUpdater->update(volt);}
 
-	matrixX3d.resize(_pot.potential.size() - 2, 3);
-	b.resize(_pot.potential.size() - 2);
+void Potential::createStaticUpdatePolicy(){
+    potentialUpdater.reset(new PotentialSolversForStatic(potential, EFieldForLC, epsilonr, dz));
+}
+void Potential::createDynamicUpdatePolicy(std::shared_ptr<LCD::WaveformBase> _voltWavePtr){
+    potentialUpdater.reset(new PotentialSolversForDynamic(potential, EFieldForLC, epsilonr, dz, _voltWavePtr));
+}
+
+PotentialCalculate::PotentialCalculate(DOUBLEARRAY1D& _pot, DOUBLEARRAY1D& _EFieldForLC, const Epsilon& _epsilons, double _dz):
+	pot(_pot), EFieldForLC(_EFieldForLC), epsilonr(_epsilons), dz(_dz){
+
+	matrixX3d.resize(_pot.size() - 2, 3);
+	b.resize(_pot.size() - 2);
 	for (int i = 0; i < b.size(); ++i)
 		b(i) = 0.0;
 
-	x.resize(_pot.potential.size());
+	x.resize(_pot.size());
 	for (auto& i : x) i = 0.0;
 }
 
-void PotentialCalculate:calculate(double volt){
-	DOUBLEARRAY1D& pot = potentials.potential;
+void PotentialCalculate::calculate(double volt){
 	
 	//apply B.C
 	pot[0] = 0.0;
 	pot.back() = volt;
 
-	DOUBLEARRAY1D& EFieldForLC = potentials.EFieldForLC;
 	const DOUBLEARRAY1D& epsr33 = epsilonr.getLCEpsr33();
 	
-	int nGrid = potentials.potential.size();
+	int nGrid = pot.size();
 
 	for (int i = 0; i < nGrid-2; i++)
 		for (int j = 0; j < 3; j++)
@@ -170,9 +201,9 @@ void PotentialCalculate:calculate(double volt){
 	}
 
 	{
-		matrixX3d(nGrid-3, 0)=epsr33[N-3];
-		matrixX3d(nGrid-3, 1)=(epsr33[N-2]+epsr33[N-3])*-1.0;
-		b(nGrid-3)=-1.0*epsr33[N-2]*pot[nGrid-1];//BC
+		matrixX3d(nGrid-3, 0)=epsr33[nGrid-3];
+		matrixX3d(nGrid-3, 1)=(epsr33[nGrid-2]+epsr33[nGrid-3])*-1.0;
+		b(nGrid-3)=-1.0*epsr33[nGrid-2]*pot[nGrid-1];//BC
 	}
 
 
@@ -187,8 +218,8 @@ void PotentialCalculate:calculate(double volt){
 
 	x[nGrid - 1] = volt;
 	x[0] = 0.0;
-	x[nGrid - 2] = b(n-3)/matrixX3d(nGrid-3, 1);
-	for (int i = nGrid-4; i>-1; i--){
+	x[nGrid - 2] = b(nGrid-3)/matrixX3d(nGrid-3, 1);
+	for (int i = nGrid-4; i>-1; i--)
 		x[i+1]=(b(i)-matrixX3d(i,2)*x[i+2])/matrixX3d(i,1);
 
 	//put the answers back.
@@ -199,19 +230,18 @@ void PotentialCalculate:calculate(double volt){
 		EFieldForLC[i] = (pot[i+1] - pot[i-1])/2.0/dz;
 }
 
+PotentialSolversForStatic::PotentialSolversForStatic(DOUBLEARRAY1D& _pot, DOUBLEARRAY1D& _EFieldForLC, const Epsilon& _epsilonr, double _dz)
+	:PotentialCalculate(_pot, _EFieldForLC, _epsilonr, _dz){}
 
-PotentialSolversForStatic::update(double volt){
+void PotentialSolversForStatic::update(double volt){
 	//get potential B.C. on the LC layer
 	volt*=epsilonr.getLCVoltRatio();
 	this->calculate(volt);
 }
 
-PotentialSolversForStatic::PotentialSolversForStatic(Potnetial& _pot, const Epsilon& _epsilons, double _dz):
-	PotentialCalculate(_pot, epsilons, _dz){}
-
-PotentialSolversForDynamic:PotentialSolversForDynamic(Potnetial& _pot, LCDirector& _lcDir, double _dz, DielecParameters _tftpi,
-    std::shared_ptr<LCD::WaveformBase> _voltWavePtr = std::shared_ptr<LCD::WaveformBase>())
-	:PotentialCalculate(_pot, epsilons, _dz){
+PotentialSolversForDynamic::PotentialSolversForDynamic(DOUBLEARRAY1D& _pot, DOUBLEARRAY1D& _EFieldForLC, const Epsilon& _epsilons, double _dz, 
+    std::shared_ptr<LCD::WaveformBase> _voltWavePtr)
+	:PotentialCalculate(_pot, _EFieldForLC, _epsilons, _dz){
 	voltWavePtr = _voltWavePtr;
 	if (!voltWavePtr){
 		std::cout << "No wave form applied, use 0.0 volt DC instead" << std::endl;
@@ -219,6 +249,6 @@ PotentialSolversForDynamic:PotentialSolversForDynamic(Potnetial& _pot, LCDirecto
 	}
 }
 
-void PotentialSolversForDynamic:update(double t){
+void PotentialSolversForDynamic::update(double t){
 	this->calculate((*voltWavePtr)(t)*epsilonr.getLCVoltRatio());
 }

@@ -6,7 +6,7 @@
 
 void writeDirectors(LCD1D::DIRVEC dirs, std::string suffix=""){
     std::fstream file;
-    file.open(("Directors"+suffix+".txt").c_str(), std::ios::trunc);
+    file.open(("Directors"+suffix+".txt").c_str(), std::ios::out|std::ios::trunc);
     for (int i = 0; i < dirs.extent(0); ++i){
         file << dirs(i)(0) << " " << dirs(i)(1) << " " << dirs(i)(2) << " " << std::acos(dirs(i)(2))
              << " " << std::atan2(dirs(i)(1), dirs(i)(0)) << " " << std::endl;
@@ -17,7 +17,7 @@ void writeDirectors(LCD1D::DIRVEC dirs, std::string suffix=""){
 
 void writePotentials(LCD::DOUBLEARRAY1D potentials, std::string suffix=""){
     std::fstream file;
-    file.open(("Potentials"+suffix+".txt").c_str(), std::ios::trunc);
+    file.open(("Potentials"+suffix+".txt").c_str(), std::ios::out|std::ios::trunc);
     for (int i = 0; i < potentials.size(); ++i){
         file << potentials[i] << std::endl;
     }

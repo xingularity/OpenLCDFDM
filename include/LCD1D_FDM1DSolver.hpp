@@ -76,6 +76,7 @@ namespace LCD1D{
     public:
         Epsilon(size_t _lc_layernum, double _cellgap){
             lcLayerNum=_lc_layernum; epsr33.resize(lcLayerNum); dz=_cellgap/_lc_layernum;
+            for (auto& i : epsr33) i = 1.0;
         }
         ///set TFTPI parameters
         void setTFTPI(DielecParameters _param){tftpi_epsr = _param.epsr; tftpiThick = _param.thick;}
@@ -119,9 +120,9 @@ namespace LCD1D{
         friend LCVecUpdater;
     public:
         ///Constructor
-        LCDirector(size_t _lcLayerNum, double _cellgap, const LCParamters _lcParam, const RubbingCondition _rubbing, Epsilon& _epsilonr)
-            :layerNum(_lcLayerNum), cellgap(_cellgap), lcParam(_lcParam), rubbing(_rubbing), epsilonr(_epsilonr){
-            
+        LCDirector(size_t _lcLayerNum, const LCParamters _lcParam, const RubbingCondition _rubbing, Epsilon& _epsilonr)
+            :layerNum(_lcLayerNum), lcParam(_lcParam), rubbing(_rubbing), epsilonr(_epsilonr){
+
             lcDir.resizeAndPreserve(_lcLayerNum+1);
             this->resetLCDirectors();
         }
@@ -149,11 +150,11 @@ namespace LCD1D{
         void resetConditions(const LCParamters _lcParam);
         ///reset rubbing conditions, it will reset LC directors
         void resetConditions(const RubbingCondition _rubbing);
-        ///use vector form 
+        ///use vector form
         void createVectorFormUpdater(const Potential& _pot, double dt);
+        double update();
     private:
         size_t layerNum;
-        double cellgap;
         ///LC parameters
         LCParamters lcParam;
         ///rubbing conditions
@@ -225,7 +226,7 @@ namespace LCD1D{
     };
 
     /**
-    This class serves as UpdatePolicy of Potential to update potentials and it uses a Waveform objects to 
+    This class serves as UpdatePolicy of Potential to update potentials and it uses a Waveform objects to
     decides BC.
     */
     class PotentialSolversForDynamic: public PotentialCalculate{

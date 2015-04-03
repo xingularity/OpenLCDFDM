@@ -72,7 +72,11 @@ void LCDirector::resetConditions(const RubbingCondition _rubbing){
 }
 
 void LCDirector::createVectorFormUpdater(const Potential& _pot, double dt){
-    lcUpdater.reset(new LCVecUpdater(_pot, *this, epsilonr, lcParam, cellgap/layerNum, dt));
+    lcUpdater.reset(new LCVecUpdater(_pot, *this, epsilonr, lcParam, lcParam.thick/layerNum, dt));
+}
+
+double LCDirector::update(){
+	return lcUpdater->update();
 }
 
 LCSolverBase::LCSolverBase(const Potential& _pot, LCDirector& _lcDir, Epsilon& _epsilonr, LCParamters _lcParam
@@ -109,7 +113,7 @@ double LCVecUpdater::update(){
 		temp(i)(1)=((1.0-nz2)*k22+k33*nz2)*(dirs(i+1)(1)+dirs(i-1)(1)-2.0*dirs(i)(1))
 			-q0*dz*k22*(dnx)+0.5*dirs(i)(2)*(k33-k22)*(dnz*(dny));
 		temp(i)(1)/=(dz*dz*gamma);
-	
+
 		//calculate variation of nz
 		temp(i)(2)=(k11-nz2*k22+k33*nz2)*(dirs(i+1)(2)+dirs(i-1)(2)-2.0*dirs(i)(2))
 			+EPS0*delta_epsr*EFieldForLC[i]*EFieldForLC[i]*dz*dz*dirs(i)(2) //divide dz later
@@ -172,21 +176,21 @@ PotentialCalculate::PotentialCalculate(DOUBLEARRAY1D& _pot, DOUBLEARRAY1D& _EFie
 }
 
 void PotentialCalculate::calculate(double volt){
-	
+
 	//apply B.C
 	pot[0] = 0.0;
 	pot.back() = volt;
 
 	const DOUBLEARRAY1D& epsr33 = epsilonr.getLCEpsr33();
-	
+
 	int nGrid = pot.size();
 
 	for (int i = 0; i < nGrid-2; i++)
 		for (int j = 0; j < 3; j++)
 			matrixX3d(i, j)=0.0;
-	
+
 	for (int i = 0; i < nGrid-2; i++){ b(i) = 0.0;}
-	
+
 	for (int i = 1; i < nGrid-3; i++){
 		matrixX3d(i,0)=epsr33[i];
 		matrixX3d(i,1)=(epsr33[i+1]+epsr33[i])*-1.0;
@@ -239,7 +243,7 @@ void PotentialSolversForStatic::update(double volt){
 	this->calculate(volt);
 }
 
-PotentialSolversForDynamic::PotentialSolversForDynamic(DOUBLEARRAY1D& _pot, DOUBLEARRAY1D& _EFieldForLC, const Epsilon& _epsilons, double _dz, 
+PotentialSolversForDynamic::PotentialSolversForDynamic(DOUBLEARRAY1D& _pot, DOUBLEARRAY1D& _EFieldForLC, const Epsilon& _epsilons, double _dz,
     std::shared_ptr<LCD::WaveformBase> _voltWavePtr)
 	:PotentialCalculate(_pot, _EFieldForLC, _epsilons, _dz){
 	voltWavePtr = _voltWavePtr;

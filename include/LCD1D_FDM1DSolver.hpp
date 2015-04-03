@@ -79,7 +79,7 @@ namespace LCD1D{
         ///set CFPI parameters
         void setCFPI(DielecParameters _param){cfpi_epsr = _param.epsr; cfpiThick = _param.thick;}
         ///get epsilon distribution in LC
-        DOUBLEARRAY1D getLCEpsr33()const{return epsr33;}
+        const DOUBLEARRAY1D& getLCEpsr33()const{return epsr33;}
         ///update epsr_33 in LC
         void updateEpsilonr(const double& epsr_para, const double& epsr_perp, const DIRVEC dirs);
         ///get epsilon distribution in LC
@@ -168,6 +168,8 @@ namespace LCD1D{
         Potential(size_t _size, const Epsilon& _epsilonr):epsilonr(_epsilonr){
             potential.resize(_size);
             for(auto& i: potential) i = 0.0;
+            EFieldForLC.resize(_size);
+            for(auto& i: EFieldForLC) i = 0.0;
         }
         const getSize(){return potential.size();}
         DOUBLEARRAY1D getPotentials()const{return potential;}
@@ -188,7 +190,8 @@ namespace LCD1D{
     
     template<class UpdatePolicy>
     Potential<UpdatePolicy>::update(double anything){
-        throw runtime_error("This function can't be called, one must use specialized version.");
+        throw runtime_error("This function (Potential<UpdatePolicy>::update(double anything)) shouldn't be called, "
+        		"one must use specialized version.");
     }
 
     template<>
@@ -201,34 +204,43 @@ namespace LCD1D{
         potentialUpdater->update(t);
     }
 
+    class PotentialCalculate{
+    public:
+        PotentialCalculate(Potnetial& _pot, const Epsilon& _epsilons, double _dz);
+    protected:
+        ///give voltage B.C. on the LC layer
+        void calculate(double volt);
+        double dz{0.0};
+        Potential& potentials;
+        const Epsilon& epsilonr;
+        ///This is for solving the matrix. In AX= b, it's the A.
+        Eigen::MatrixX3d matrixX3d;
+        ///This is for solving the matrix. In AX= b, it's the b.
+        Eigen::VectorXd b;
+        DOUBLEARRAY1D x;
+    };
+
 
     /**
     This class serves as UpdatePolicy of Potential to update potentials and B.C. can be changed through a member function.
     */
-    class PotentialSolversForStatic{
+    class PotentialSolversForStatic: public PotentialCalculate{
     public:
         PotentialSolver1D(Potnetial& _pot, const Epsilon& _epsilons, double _dz);
         ///input voltage on the cell boundary, it will be transformed to the voltage BC. on the LC layer.
         void update(double volt);
-    protected:
-        double dz{0.0};
-        Potential& potentials;
-        const Epsilon& epsilonr;
     };
 
     /**
     This class serves as UpdatePolicy of Potential to update potentials and it uses a Waveform objects to 
     decides BC.
     */
-    class PotentialSolversForDynamic{
+    class PotentialSolversForDynamic: public PotentialCalculate{
     public:
-        PotentialSolver1D(Potnetial& _pot, LCDirector& _lcDir, double _dz, DielecParameters _tftpi,
+        PotentialSolversForDynamic(Potnetial& _pot, LCDirector& _lcDir, double _dz,
             std::shared_ptr<LCD::WaveformBase> _voltWavePtr = std::shared_ptr<LCD::WaveformBase>());
         void update(double t);
     protected:
-        double dz{0.0};
-        Potential& potentials;
-        Epsilon& epsilonr;
         std::shared_ptr<LCD::WaveformBase> voltWavePtr;
     };
 

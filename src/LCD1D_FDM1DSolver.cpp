@@ -1,19 +1,34 @@
 /*
  * Copyright (C) 2015 Zong-han, Xie <icbm0926@gmail.com>.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
+ * You may use this file under the terms of the BSD license as follows:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * "Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in
+ *     the documentation and/or other materials provided with the
+ *     distribution.
+ *   * Neither the name of Nokia Corporation and its Subsidiary(-ies) nor
+ *     the names of its contributors may be used to endorse or promote
+ *     products derived from this software without specific prior written
+ *     permission.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+ *
  */
 
 #include "LCD1D_FDM1DSolver.hpp"
@@ -30,22 +45,23 @@ double Epsilon::calculateCapacitance() {
 	for (double epsr : epsr33){
 		answer += dz/epsr;
 	}
-	lcCap = EPS0*1.0/answer;
-	piCap_inv = tftpiThick/tftpi_epsr + cfpiThick/cfpi_epsr;
+	lcCap = EPS0/answer;
+	piCap_inv = (tftpiThick/tftpi_epsr + cfpiThick/cfpi_epsr)/EPS0;
 	if (std::abs(piCap_inv) < 1.0e-13)
 		totalCap = lcCap;
 	else
 		totalCap = 1.0/(piCap_inv + 1.0/lcCap);
-	return lcCap; //The unit is 1.0e-10F/cm^2
+	return totalCap; //The unit is 1.0e-10F/cm^2
 }
 
 double Epsilon::getLCVoltRatio()const{
 	double piCap{0.0};
+	//This is inverse of the capacitance of the alignment layer, unitless due to no EPS0.
 	piCap = tftpiThick/tftpi_epsr + cfpiThick/cfpi_epsr;
 	if (std::abs(piCap) < 1.0e-13)
 		return 1.0;
 	else{
-		piCap = 1.0/piCap;
+		piCap = 1.0/piCap*EPS0;
 		return piCap / (piCap + lcCap);
 	}
 }
@@ -58,6 +74,7 @@ void Epsilon::updateEpsilonr(const double& epsr_para, const double& epsr_perp, c
 			+ std::string("dirs.extent(0) = ") + toString(dirs.extent(0)) + ", epsr33.size() = " + toString(epsr33.size()));
 	for (int i = 0; i < epsr33.size(); ++i)
 		epsr33[i] = epsr_perp + delta_epsr*std::pow(std::cos(std::acos(dirs(i)(2)) + std::acos(dirs(i+1)(2))), 2.0);
+	calculateCapacitance();
 }
 
 void LCDirector::resetConditions(const LCParamters _lcParam){
@@ -178,8 +195,8 @@ PotentialCalculate::PotentialCalculate(DOUBLEARRAY1D& _pot, DOUBLEARRAY1D& _EFie
 void PotentialCalculate::calculate(double volt){
 
 	//apply B.C
-	pot[0] = 0.0;
-	pot.back() = volt;
+	pot[0] = volt;
+	pot.back() = 0.0;
 
 	const DOUBLEARRAY1D& epsr33 = epsilonr.getLCEpsr33();
 
@@ -210,7 +227,6 @@ void PotentialCalculate::calculate(double volt){
 		b(nGrid-3)=-1.0*epsr33[nGrid-2]*pot[nGrid-1];//BC
 	}
 
-
 	matrixX3d(1,1)-=matrixX3d(1,0)/matrixX3d(0,0)*matrixX3d(0,1);
 	b(1)-=matrixX3d(1,0)/matrixX3d(0,0)*b(0);
 	double temp=0.0;
@@ -220,8 +236,8 @@ void PotentialCalculate::calculate(double volt){
 		b(i+1)-=b(i)*temp;
 	}
 
-	x[nGrid - 1] = volt;
-	x[0] = 0.0;
+	x[nGrid - 1] = 0.0;
+	x[0] = volt;
 	x[nGrid - 2] = b(nGrid-3)/matrixX3d(nGrid-3, 1);
 	for (int i = nGrid-4; i>-1; i--)
 		x[i+1]=(b(i)-matrixX3d(i,2)*x[i+2])/matrixX3d(i,1);
@@ -232,6 +248,9 @@ void PotentialCalculate::calculate(double volt){
 	//update EFields
 	for (size_t i = 1; i < pot.size() - 1; ++i)
 		EFieldForLC[i] = (pot[i+1] - pot[i-1])/2.0/dz;
+	//These are useless values.
+	EFieldForLC[0] = 0.0;
+	EFieldForLC.back() = 0.0;
 }
 
 PotentialSolversForStatic::PotentialSolversForStatic(DOUBLEARRAY1D& _pot, DOUBLEARRAY1D& _EFieldForLC, const Epsilon& _epsilonr, double _dz)

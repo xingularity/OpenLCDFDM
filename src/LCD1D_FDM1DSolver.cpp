@@ -12,8 +12,8 @@
  *     notice, this list of conditions and the following disclaimer in
  *     the documentation and/or other materials provided with the
  *     distribution.
- *   * Neither the name of OpenLCDFDM nor the names of its contributors 
- *     may be used to endorse or promote products derived from this 
+ *   * Neither the name of OpenLCDFDM nor the names of its contributors
+ *     may be used to endorse or promote products derived from this
  *     software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -240,6 +240,8 @@ void PotentialCalculate::calculate(double volt){
 	x[nGrid - 2] = b(nGrid-3)/matrixX3d(nGrid-3, 1);
 	for (int i = nGrid-4; i>-1; i--)
 		x[i+1]=(b(i)-matrixX3d(i,2)*x[i+2])/matrixX3d(i,1);
+
+	x[1]=(b(0)-matrixX3d(0,1)*x[2])/matrixX3d(0,0);
 
 	//put the answers back.
 	pot.swap(x);

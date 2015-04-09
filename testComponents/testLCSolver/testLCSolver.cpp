@@ -12,8 +12,8 @@
  *     notice, this list of conditions and the following disclaimer in
  *     the documentation and/or other materials provided with the
  *     distribution.
- *   * Neither the name of OpenLCDFDM nor the names of its contributors 
- *     may be used to endorse or promote products derived from this 
+ *   * Neither the name of OpenLCDFDM nor the names of its contributors
+ *     may be used to endorse or promote products derived from this
  *     software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -85,6 +85,6 @@ void testTNCalculation(double dc_volt){
 
 int main(int argc, const char *argv[])
 {
-    testTNCalculation(2.0);
+    testTNCalculation(5.0);
     return 0;
 }

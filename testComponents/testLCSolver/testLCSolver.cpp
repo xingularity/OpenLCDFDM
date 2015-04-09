@@ -77,7 +77,7 @@ void testTNCalculation(double dc_volt){
     LCD1D::DielecParameters tftpiParam = {0.1, 3.2};
     LCD1D::DielecParameters cfpiParam = {0.1, 3.2};
     LCD1D::RubbingCondition rubbing = {89.0*M_PI/180.0, 45.0*M_PI/180.0, 89.0*M_PI/180.0, 90.0*M_PI/180.0};
-    LCD1D::Epsilon epsilonr(48, lcParam.thick);
+    LCD1D::Epsilon epsilonr(layerNum, lcParam.thick);
     epsilonr.setTFTPI(tftpiParam);
     epsilonr.setCFPI(cfpiParam);
     LCD1D::Potential potential(layerNum+1, epsilonr, lcParam.thick/layerNum);
@@ -85,13 +85,14 @@ void testTNCalculation(double dc_volt){
     LCD1D::LCDirector lcDirector(layerNum, lcParam, rubbing, epsilonr);
     lcDirector.createVectorFormUpdater(potential, dt);
     double residual = std::numeric_limits<double>::max();
+    writeDirectors(lcDirector.getDirectors(), "_TNNoq0_"+toString(dc_volt)+"V_initialized_");
     while(residual >= max_error){
         potential.update(dc_volt);
         residual = lcDirector.update();
         std::cout << "residual = " << residual << std::endl;
     };
-    writePotentials(potential.getPotentials(), "_TNNoq0_"+toString(dc_volt)+"V");
-    writeEFieldForLC(potential.getEfieldForLC(), "_TNNoq0_"+toString(dc_volt)+"V");
+    //writePotentials(potential.getPotentials(), "_TNNoq0_"+toString(dc_volt)+"V");
+    //writeEFieldForLC(potential.getEfieldForLC(), "_TNNoq0_"+toString(dc_volt)+"V");
     writeDirectors(lcDirector.getDirectors(), "_TNNoq0_"+toString(dc_volt)+"V");
 }
 

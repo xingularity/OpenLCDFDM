@@ -137,17 +137,9 @@ double LCVecUpdater::update(){
 		temp(i)(2)/=(dz*dz*gamma);
 	}
 
-	/*
-	for (int i=1;i < dirs.extent(0) - 1;i++){
-		std::cout << temp(i)(0) << ", " << temp(i)(1) << ", " << temp(i)(2) << std::endl;
-	}
-	*/
-
 	//update real directors
-	for (int i=1;i < dirs.extent(0) - 1;i++){
-		for (int j=0;j<3;j++)
-			tempDir(i)(j) = dirs(i)(j) + dt*(temp(i)(j));
-	}
+	for (int i=1;i < dirs.extent(0) - 1;i++)
+			tempDir(i) = dirs(i) + dt*temp(i);
 
 	//normalize directors
 	for (int i=1;i < dirs.extent(0) - 1;i++){
@@ -171,7 +163,11 @@ double LCVecUpdater::update(){
 	}
 
 	//put the advanced directors back to "dirs"
-	blitz::swap(dirs, tempDir);
+	for (int i = 1; i < tempDir.extent(0) -1; ++i){
+		for (int j = 0; j < 3; ++j)
+			dirs(i)(j) = tempDir(i)(j);
+	}
+	//blitz::swap(dirs, tempDir);
 	epsilonr.updateEpsilonr(lcParam.epsr_para, lcParam.epsr_perp, dirs);
 	return residual;
 }

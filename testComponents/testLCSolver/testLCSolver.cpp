@@ -57,6 +57,16 @@ void writePotentials(LCD::DOUBLEARRAY1D potentials, std::string suffix=""){
     file.close();
 }
 
+void writeEFieldForLC(LCD::DOUBLEARRAY1D EFieldForLC, std::string suffix=""){
+    std::fstream file;
+    file.open(("EFieldForLC"+suffix+".txt").c_str(), std::ios::out|std::ios::trunc);
+    for (int i = 0; i < EFieldForLC.size(); ++i){
+        file << EFieldForLC[i] << std::endl;
+    }
+    file.flush();
+    file.close();
+}
+
 void testTNCalculation(double dc_volt){
     std::cout << "Start TN Calculation without q0 under dc_volt=" + toString(dc_volt) << std::endl;
     size_t layerNum = 48;
@@ -78,8 +88,10 @@ void testTNCalculation(double dc_volt){
     while(residual >= max_error){
         potential.update(dc_volt);
         residual = lcDirector.update();
+        std::cout << "residual = " << residual << std::endl;
     };
     writePotentials(potential.getPotentials(), "_TNNoq0_"+toString(dc_volt)+"V");
+    writeEFieldForLC(potential.getEfieldForLC(), "_TNNoq0_"+toString(dc_volt)+"V");
     writeDirectors(lcDirector.getDirectors(), "_TNNoq0_"+toString(dc_volt)+"V");
 }
 

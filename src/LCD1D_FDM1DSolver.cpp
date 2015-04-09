@@ -98,6 +98,7 @@ double LCDirector::update(){
 LCSolverBase::LCSolverBase(const Potential& _pot, LCDirector& _lcDir, Epsilon& _epsilonr, LCParamters _lcParam
     , double _dz, double _dt):pot(_pot), epsilonr(_epsilonr), lcParam(_lcParam), lcDir(_lcDir), dz(_dz), dt(_dt){
         tempDir.resizeAndPreserve(lcDir.getSize());
+		this->changeLCParams(this->lcParam);
 }
 
 LCVecUpdater::LCVecUpdater(const Potential& _pot, LCDirector& _lcDir, Epsilon& _epsilonr, LCParamters _lcParam, double _dz, double _dt):
@@ -110,7 +111,6 @@ double LCVecUpdater::update(){
 	const DOUBLEARRAY1D& EFieldForLC = pot.getEfieldForLC();
 	DIRVEC dirs = lcDir.lcDir; //use copy constructor
 	double nx2=0.0, ny2=0.0, nz2=0.0, dnx=0.0, dny=0.0, dnz=0.0;
-
 	//start to advancing directors
 	for (int i=1; i < dirs.extent(0) - 1; i++){
 		dnx=dirs(i+1)(0)-dirs(i-1)(0);
@@ -136,6 +136,12 @@ double LCVecUpdater::update(){
 			+0.25*dirs(i)(2)*(k33-k22)*(dnz*dnz-dnx*dnx-dny*dny);
 		temp(i)(2)/=(dz*dz*gamma);
 	}
+
+	/*
+	for (int i=1;i < dirs.extent(0) - 1;i++){
+		std::cout << temp(i)(0) << ", " << temp(i)(1) << ", " << temp(i)(2) << std::endl;
+	}
+	*/
 
 	//update real directors
 	for (int i=1;i < dirs.extent(0) - 1;i++){

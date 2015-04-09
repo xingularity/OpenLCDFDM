@@ -72,7 +72,7 @@ void Epsilon::updateEpsilonr(const double& epsr_para, const double& epsr_perp, c
 		throw std::runtime_error("Sizes of the director container and the eps33 container don't match.\n"
 			+ std::string("dirs.extent(0) = ") + toString(dirs.extent(0)) + ", epsr33.size() = " + toString(epsr33.size()));
 	for (int i = 0; i < epsr33.size(); ++i)
-		epsr33[i] = epsr_perp + delta_epsr*std::pow(std::cos(std::acos(dirs(i)(2)) + std::acos(dirs(i+1)(2))), 2.0);
+		epsr33[i] = epsr_perp + delta_epsr*std::pow(std::cos(0.5*std::acos(dirs(i)(2)) + 0.5*std::acos(dirs(i+1)(2))), 2.0);
 	calculateCapacitance();
 }
 

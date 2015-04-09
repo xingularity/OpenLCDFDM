@@ -91,7 +91,7 @@ void testTNCalculation(double dc_volt){
         residual = lcDirector.update();
         std::cout << "residual = " << residual << std::endl;
     };
-    //writePotentials(potential.getPotentials(), "_TNNoq0_"+toString(dc_volt)+"V");
+    writePotentials(potential.getPotentials(), "_TNNoq0_"+toString(dc_volt)+"V");
     //writeEFieldForLC(potential.getEfieldForLC(), "_TNNoq0_"+toString(dc_volt)+"V");
     writeDirectors(lcDirector.getDirectors(), "_TNNoq0_"+toString(dc_volt)+"V");
 }

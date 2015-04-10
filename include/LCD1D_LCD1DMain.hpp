@@ -42,22 +42,43 @@
 
 class LCD1DMainBase{
 public:
-    LCD1DMainBase(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing);
     void setTFTPI(LCD1D::DielecParameters _tftpi);
     void setCFPI(LCD1D::DielecParameters _cfpi);
     void setOMPThreadNum(size_t _num);
-    
+    void addOpticalGlassLayer(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nkSpectrum);
+    void addOpticalIsotropicLayer(double _thick, std::vector<double> _spectrumLambdas, 
+        std::vector<std::complex<double> > _nkSpectrum, OpticalMaterialClass _class);
+    void addOpticalPolarizer(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nokoSpectrum, 
+        std::vector<std::complex<double> > _nekeSpectrum);
+    void addOpticalUnaixialLayer(double _thick, std::vector<double> _spectrumLambdas, 
+        std::vector<std::complex<double> > _nokoSpectrum, std::vector<std::complex<double> > _nekeSpectrum, 
+        OpticalMaterialClass _class);
+    void addOpticalLC(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nokoSpectrum, 
+        std::vector<std::complex<double> > _nekeSpectrum);
+    ///if input 0, then only calculate normal incident.
+    void setOpticalIncidentAngles(size_t _intervalDegree);
+    void setOpticalIncidentAngles(std::vector<std::pair<double, double> > _angles);
+    void setOpticalLambda(std::vector<double> _lambdas);
+    void setOpticalLambda(double _lambda);
+    void calculate();
 protected:
-    std::share_ptr<LCD1D::Epsilon> epsilonr;
-    std::share_ptr<LCD1D::Potential> potentials;
-    std::share_ptr<LCD1D::LCDirector> lcDir;
+    LCD1DMainBase(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing);
+    std::shared_ptr<LCD1D::Epsilon> epsilonr;
+    std::shared_ptr<LCD1D::Potential> potentials;
+    std::shared_ptr<LCD1D::LCDirector> lcDir;
+    LCDOptics::MATERIALLAYERS2X2CONT materials;
+    std::shared_ptr<LCDOptics::ExtendedJones> extj;
+    LCDOptics::IAngles inAngles;
+    LCD::DOUBLEARRAY1D lambdas;
 };
 
 class LCD1DStaticMain: public LCD1DMainBase{
 public:
     LCD1DStaticMain(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing, 
-        double _voltStart, double _voltEnd, double _voltStep);
-    
+        double _voltStart, double _voltEnd, double _voltStep, double _maxIter, double _error);
+private:
+    double maxIter;
+    double error;
 };
 
 class LCD1DDynamicMain: public LCD1DMainBase{
@@ -65,7 +86,6 @@ public:
     LCD1DStaticMain(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing, double _maxCalcTime);
     void setDCWaveform(double _volt);
     void setStepWaveform(std::map<double, double> _profile);
-    
 private:
     std::shared_ptr<WaveformBase> waveform;
     double maxCalcTime;

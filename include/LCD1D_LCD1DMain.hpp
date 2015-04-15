@@ -60,6 +60,7 @@ public:
     void setOpticalIncidentAngles(std::vector<std::pair<double, double> > _angles);
     void setOpticalLambda(std::vector<double> _lambdas);
     void setOpticalLambda(double _lambda);
+    void setOpticalSourceSpectrum(std::vector<double> _lambdas, std::vector<double> _powers);
     void calculate();
 protected:
     LCD1DMainBase(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing);
@@ -72,23 +73,57 @@ protected:
     LCD::DOUBLEARRAY1D lambdas;
 };
 
+/**
+Doing static LCD simulation
+*/
 class LCD1DStaticMain: public LCD1DMainBase{
 public:
     LCD1DStaticMain(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing, 
         double _voltStart, double _voltEnd, double _voltStep, double _maxIter, double _error);
+    ///vector records which voltages are calculated.
+    LCD::DOUBLEARRAY1D getCalcVolts() const;
+    ///std::vector 3D container. [voltage index][iAngle index][iAngle index]
+    std::vector<LCDOptics::TRANSRESULT> getTransmissions()const;
+    ///incident angles. originally using tuples, return std::pairs for Cython.
+    std::vector<std::vector<std::pair<double, double> > > getIncidentAngles()const;
+    ///[volts index][z-grid index][component index]
+    std::vector<DOUBLEARRAY2D> getLCDirResults()const;
+
 private:
     double maxIter;
     double error;
+    LCD::DOUBLEARRAY1D  calcVolts;
+    std::vector<DOUBLEARRAY2D> lcDirResult;
+    std::vector<LCDOptics::TRANSRESULT> transResults;
 };
 
+/**
+Doing dynamic LCD simulation
+*/
 class LCD1DDynamicMain: public LCD1DMainBase{
 public:
     LCD1DStaticMain(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing, double _maxCalcTime);
+    ///set DC wavreform if one want to use DC voltage B.C. to simulate.
     void setDCWaveform(double _volt);
+    ///set step waveform if one want to use step waveform profile to simulate.
     void setStepWaveform(std::map<double, double> _profile);
+    ///vector records which step data are recorded at.
+    LCD::DOUBLEARRAY1D getRecordStep() const;
+    ///vector records which time (in ms) data are recorded at.
+    LCD::DOUBLEARRAY1D getRecordTime() const;
+    ///std::vector 3D container. [record step index][iAngle index][iAngle index]
+    std::vector<LCDOptics::TRANSRESULT> getTransmissions()const;
+    ///incident angles. originally using tuples, return std::pairs for Cython.
+    std::vector<std::vector<std::pair<double, double> > > getIncidentAngles()const;
+    ///[record time index][z-grid index][component index]
+    std::vector<DOUBLEARRAY2D> getLCDirResults()const;
 private:
     std::shared_ptr<WaveformBase> waveform;
     double maxCalcTime;
+    LCD::DOUBLEARRAY1D recordSteps;
+    LCD::DOUBLEARRAY1D recordTimes;
+    std::vector<DOUBLEARRAY2D> lcDirResult;
+    std::vector<LCDOptics::TRANSRESULT> transResults;
 };
 
 #endif

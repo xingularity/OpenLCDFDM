@@ -134,8 +134,9 @@ namespace LCDOptics{
     */
     class ExtendedJonesBase{
     public:
-        ///For sigle wavelength calculation
-        ExtendedJonesBase(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, LIGHTSPECTRUMDATA lightSrcSpectrum_):
+        ///For sigle wavelength calculation, one need no LIGHTSPECTRUMDATA in single wavelength, if input, it will be ignored.
+        ExtendedJonesBase(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, 
+            LIGHTSPECTRUMDATA lightSrcSpectrum_ = LIGHTSPECTRUMDATA()):
         matLayers(_materials), inAngles(_inAngles), lambdas(1, targetLambda)
         {
             matLayerNum = matLayers.size();
@@ -150,7 +151,7 @@ namespace LCDOptics{
         }
         ///For multiwavelengths calculation
         ExtendedJonesBase(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
-        const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_)
+        const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_ = LIGHTSPECTRUMDATA())
         :matLayers(_materials), inAngles(_inAngles){
             //create lambdas first
             lambdas.clear();

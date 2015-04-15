@@ -53,10 +53,10 @@ namespace LCD1D{
     public:
         ///For sigle wavelength calculation
         ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda,
-            LIGHTSPECTRUMDATA lightSrcSpectrum_, bool _ifLambertian = false, bool _ifStokes=false);
+            LIGHTSPECTRUMDATA lightSrcSpectrum_ = LIGHTSPECTRUMDATA(), bool _ifLambertian = false, bool _ifStokes=false);
         ///For multiwavelengths calculation
         ExtendedJones(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles, const double start_lambda_,
-        const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_,
+        const double end_lambda_, const double step_lambda_, LIGHTSPECTRUMDATA lightSrcSpectrum_ = LIGHTSPECTRUMDATA(), 
         bool _ifLambertian = false, bool _ifStokes=false);
         ///main function to calculate extended Jones.
         void calculateExtendedJones();

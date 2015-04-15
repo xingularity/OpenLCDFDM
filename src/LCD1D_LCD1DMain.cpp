@@ -32,3 +32,6 @@
 
 #include "LCD1D_LCD1DMain.hpp"
 
+LCD1DMainBase(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing){
+	
+}

@@ -42,18 +42,21 @@
 
 class LCD1DMainBase{
 public:
-    void setTFTPI(LCD1D::DielecParameters _tftpi);
-    void setCFPI(LCD1D::DielecParameters _cfpi);
+    ///set tftpi parameters
+    void setTFTPI(LCD1D::DielecParameters _tftpi={0.0, 0.0});
+    ///set cfpi parameters
+    void setCFPI(LCD1D::DielecParameters _cfpi={0.0,0.0});
+    ///set openMP thread numbers
     void setOMPThreadNum(size_t _num);
     void addOpticalGlassLayer(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nkSpectrum);
-    void addOpticalIsotropicLayer(double _thick, std::vector<double> _spectrumLambdas, 
-        std::vector<std::complex<double> > _nkSpectrum, OpticalMaterialClass _class);
-    void addOpticalPolarizer(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nokoSpectrum, 
+    void addOpticalIsotropicLayer(double _thick, std::vector<double> _spectrumLambdas,
+        std::vector<std::complex<double> > _nkSpectrum, LCDOptics::OpticalMaterialClass _class);
+    void addOpticalPolarizer(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nokoSpectrum,
         std::vector<std::complex<double> > _nekeSpectrum);
-    void addOpticalUnaixialLayer(double _thick, std::vector<double> _spectrumLambdas, 
-        std::vector<std::complex<double> > _nokoSpectrum, std::vector<std::complex<double> > _nekeSpectrum, 
-        OpticalMaterialClass _class);
-    void addOpticalLC(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nokoSpectrum, 
+    void addOpticalUnaixialLayer(double _thick, std::vector<double> _spectrumLambdas,
+        std::vector<std::complex<double> > _nokoSpectrum, std::vector<std::complex<double> > _nekeSpectrum,
+        LCDOptics::OpticalMaterialClass _class);
+    void addOpticalLC(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nokoSpectrum,
         std::vector<std::complex<double> > _nekeSpectrum);
     ///if input 0, then only calculate normal incident.
     void setOpticalIncidentAngles(size_t _intervalDegree);
@@ -78,7 +81,7 @@ Doing static LCD simulation
 */
 class LCD1DStaticMain: public LCD1DMainBase{
 public:
-    LCD1DStaticMain(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing, 
+    LCD1DStaticMain(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing,
         double _voltStart, double _voltEnd, double _voltStep, double _maxIter, double _error);
     ///vector records which voltages are calculated.
     LCD::DOUBLEARRAY1D getCalcVolts() const;

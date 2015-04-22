@@ -59,21 +59,26 @@ public:
     void addOpticalLC(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nokoSpectrum,
         std::vector<std::complex<double> > _nekeSpectrum);
     ///if input 0, then only calculate normal incident.
-    void setOpticalIncidentAngles(size_t _intervalDegree);
+    void setOpticalIncidentAngles(unsigned double _intervalDegree);
     void setOpticalIncidentAngles(std::vector<std::pair<double, double> > _angles);
-    void setOpticalLambda(std::vector<double> _lambdas);
-    void setOpticalLambda(double _lambda);
+    void setOpticalWavelength(double _lambda_start, double _lambda_end, double _lambda_step);
+    void setOpticalWavelength(double _lambda);
     void setOpticalSourceSpectrum(std::vector<double> _lambdas, std::vector<double> _powers);
-    void calculate();
+    void disableOpticalCalculation();
+    virtual void calculate() = 0;
 protected:
     LCD1DMainBase(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing);
+    void createExtendedJones();
     std::shared_ptr<LCD1D::Epsilon> epsilonr;
     std::shared_ptr<LCD1D::Potential> potentials;
     std::shared_ptr<LCD1D::LCDirector> lcDir;
+    std::shared_ptr<LCDOptics::ExtendedJones> extJonesMain;
     LCDOptics::MATERIALLAYERS2X2CONT materials;
-    std::shared_ptr<LCDOptics::ExtendedJones> extj;
     LCDOptics::IAngles inAngles;
-    LCD::DOUBLEARRAY1D lambdas;
+    LCDOptics::LIGHTSPECTRUMDATA lightSrcSpectrum;
+    ///They are lambda_start, lambda_end, lambda_step, if lambda_step == 0, it's single wavelength calculation.
+    ///If all three are zero, no optical calculation should be performed.
+    std::tuple<double, double, double> multiWavelengthLambdas = {0.0,0.0,0.0};
 };
 
 /**
@@ -91,7 +96,7 @@ public:
     std::vector<std::vector<std::pair<double, double> > > getIncidentAngles()const;
     ///[volts index][z-grid index][component index]
     std::vector<DOUBLEARRAY2D> getLCDirResults()const;
-
+    virtual void calculate();
 private:
     double maxIter;
     double error;
@@ -120,6 +125,7 @@ public:
     std::vector<std::vector<std::pair<double, double> > > getIncidentAngles()const;
     ///[record time index][z-grid index][component index]
     std::vector<DOUBLEARRAY2D> getLCDirResults()const;
+    virtual void calculate();
 private:
     std::shared_ptr<WaveformBase> waveform;
     double maxCalcTime;

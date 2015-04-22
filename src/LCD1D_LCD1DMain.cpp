@@ -37,11 +37,11 @@ LCD1DMainBase::LCD1DMainBase(double _lcLayerNum, LCD1D::LCParamters _lcParam, LC
 	//TODO
 }
 
-void LCD1DMainBase::setTFTPI(LCD1D::DielecParameters _tftpi={0.0, 0.0}){
+void LCD1DMainBase::setTFTPI(LCD1D::DielecParameters _tftpi){
 	epsilonr->setTFTPI(_tftpi);
 }
 
-void LCD1DMainBase::setCFPI(LCD1D::DielecParameters _cfpi={0.0,0.0}){
+void LCD1DMainBase::setCFPI(LCD1D::DielecParameters _cfpi){
 	epsilonr->setCFPI(_cfpi);
 }
 
@@ -91,4 +91,65 @@ void LCD1DMainBase::addOpticalUnaixialLayer(double _thick, std::vector<double> _
 	
 	materials.push_back(LCDOptics::Optical2x2IsoPtr(
 		new LCDOptics::Optical2x2IsoPtr::element_type(thick, nkSpectrum, _class)));
+}
+
+void LCD1DMainBase::addOpticalPolarizer(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nokoSpectrum, std::vector<std::complex<double> > _nekeSpectrum){
+    addOpticalUnaixialLayer(_thick, _spectrumLambdas, _nokoSpectrum, _nekeSpectrum, LCDOptics::OPT_POLARIZER);
+}
+
+void LCD1DMainBase::addOpticalLC(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nokoSpectrum, std::vector<std::complex<double> > _nekeSpectrum){
+    addOpticalUnaixialLayer(_thick, _spectrumLambdas, _nokoSpectrum, _nekeSpectrum, LCDOptics::OPT_LCMATERIAL);
+}
+
+void LCD1DMainBase::setOpticalIncidentAngles(unsigned double _intervalDegree){
+    std::vector<double> thetas(1,0.0);
+    std::vector<double> phis(1, 0.0);
+    
+    while(thetas.back()+_intervalDegree <= (360+1.0e-13)){
+        thetas.push_back(thetas.back() + _intervalDegree);
+    };
+    
+    while(phis.back()+_intervalDegree <= (80+1.0e-13)){
+        phis.push_back(phis.back() + _intervalDegree);
+    };
+
+    inAngles = std::vector< std::vector<Angle> >(thetas.size(), std::vector<Angle>(phis.size()));
+    for (int i = 0; i <= thetas.size(); ++i)
+        for(int j = 0; j <= phis.size(); ++j)
+            inAngles[i][j] = LCDOptics::makeAngle2(thetas[i],phis[j]);
+}
+
+void LCD1DMainBase::setOpticalIncidentAngles(std::vector<std::pair<double, double> > _angles){
+    inAngles.clear();
+    //IAngles is a 2D std::vector structure, I will put all manually input angles in the second dimension.
+    inAngles.push_back(1, std::vector<Angle>(0));
+    for (auto& i : _angles)
+        inAngles[0].push_back(LCDOptics::makeAngle2(i.first, i.second));
+}
+
+void LCD1DMainBase::setOpticalWavelength(double _lambda_start, double _lambda_end, double _lambda_step){
+    multiWavelengthLambdas = std::make_tuple(_lambda_start, _lambda_end, _lambda_step);
+}
+void LCD1DMainBase::setOpticalWavelength(double _lambda){
+    multiWavelengthLambdas = std::make_tuple(_lambda, _lambda, 0);
+}
+
+void LCD1DMainBase::disableOpticalCalculation(){
+    multiWavelengthLambdas = std::make_tuple(0.0,0.0,0.0);
+}
+
+void LCD1DMainBase::setOpticalSourceSpectrum(std::vector<double> _lambdas, std::vector<double> _powers){
+    if (_lambdas.size() != _power.size())
+        throw std::runtime_error("_lambdas.size() != _power.size() in LCD1DMainBase::setOpticalSourceSpectrum");
+    lightSrcSpectrum.clear();
+    for (int i = 0; i < _lambdas.size(); ++i)
+        lightSrcSpectrum[_lambdas[i]] = _powers[i];
+}
+
+void LCD1DMainBase::calculate(){
+    
+}
+
+void LCD1DMainBase::createExtendedJones(){
+
 }

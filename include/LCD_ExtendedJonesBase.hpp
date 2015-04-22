@@ -44,7 +44,7 @@ namespace LCDOptics{
     using Optical2x2UnixialPtr = std::shared_ptr<Optical2X2OneLayer<UniaxialType> >;
     ///container of all optical materials, in the same order of passing through a ray
     typedef std::vector<std::shared_ptr<Optical2X2OneLayerBase> > MATERIALLAYERS2X2CONT;
-    ///spectral efficiency of human eyes, get yBar of lambda from CIE web site.
+    ///spectral efficiency of human eyes, get it from yBar of lambda from CIE web site.
     const LIGHTSPECTRUMDATA SpectrumEfficiency={
         {0.38, 0.000039},
         {0.385, 0.000064},

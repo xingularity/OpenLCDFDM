@@ -138,12 +138,8 @@ void LCD1DMainBase::disableOpticalCalculation(){
     multiWavelengthLambdas = std::make_tuple(0.0,0.0,0.0);
 }
 
-void LCD1DMainBase::setOpticalSourceSpectrum(std::vector<double> _lambdas, std::vector<double> _powers){
-    if (_lambdas.size() != _power.size())
-        throw std::runtime_error("_lambdas.size() != _power.size() in LCD1DMainBase::setOpticalSourceSpectrum");
-    lightSrcSpectrum.clear();
-    for (int i = 0; i < _lambdas.size(); ++i)
-        lightSrcSpectrum[_lambdas[i]] = _powers[i];
+void LCD1DMainBase::setOpticalSourceSpectrum(LCDOptics::LIGHTSPECTRUMDATA _input){
+    lightSrcSpectrum = _input;
 }
 
 void LCD1DMainBase::calculate(){

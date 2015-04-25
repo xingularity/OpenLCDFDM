@@ -63,7 +63,7 @@ public:
     void setOpticalIncidentAngles(std::vector<std::pair<double, double> > _angles);
     void setOpticalWavelength(double _lambda_start, double _lambda_end, double _lambda_step);
     void setOpticalWavelength(double _lambda);
-    void setOpticalSourceSpectrum(std::vector<double> _lambdas, std::vector<double> _powers);
+    void setOpticalSourceSpectrum(LCDOptics::LIGHTSPECTRUMDATA _input);
     void disableOpticalCalculation();
     virtual void calculate() = 0;
 protected:

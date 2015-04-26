@@ -57,53 +57,44 @@ void LCD1DMainBase::setOMPThreadNum(size_t _num){
 	omp_set_num_threads(num);
 }
 
-void addOpticalGlassLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum){
-	addOpticalIsotropicLayer(_thick, _spectrumLambdas, _nkSpectrum, LCDOptics::OPT_GLASS);
+void LCD1DMainBase::addOpticalGlassLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum){
+	addOpticalIsotropicLayer(_thick, _nkSpectrum, LCDOptics::OPT_GLASS);
 }
 
-void LCD1DMainBase::addOpticalIsotropicLayer(double _thick, std::vector<double> _spectrumLambdas,
-	std::vector<std::complex<double> > _nkSpectrum, LCDOptics::OpticalMaterialClass _class){
-
-	if (_spectrumLambdas.size() != _nkSpectrum.size())
-		throw runtime_error("Size of the wavelengths don't corresspond to the size of nk values");
-
-	LCDOptics::NKData nkSpectrum;
-	for (int i = 0; i < _spectrumLambdas.size(); ++i)
-		nkSpectrum[_spectrumLambdas[i]] = _nkSpectrum[i];
+void LCD1DMainBase::addOpticalIsotropicLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum,
+    LCDOptics::OpticalMaterialClass _class){
 
 	materials.push_back(LCDOptics::Optical2x2IsoPtr(
-		new LCDOptics::Optical2x2IsoPtr::element_type(thick, nkSpectrum, _class)));
+		new LCDOptics::Optical2x2IsoPtr::element_type(thick, _nkSpectrum, _class)));
 }
 
-void LCD1DMainBase::addOpticalUnaixialLayer(double _thick, std::vector<double> _spectrumLambdas,
-	std::vector<std::complex<double> > _nokoSpectrum, std::vector<std::complex<double> > _nekeSpectrum,
-	LCDOptics::OpticalMaterialClass _class){
-
-	std::vector<std::complex<double> > _nkSpectrum, LCDOptics::OpticalMaterialClass _class){
-	if (_spectrumLambdas.size() != _nokoSpectrum.size())
-		throw runtime_error("Size of the wavelengths don't corresspond to the size of nk values");
-	else if (_spectrumLambdas.size() != _nekeSpectrum.size())
-		throw runtime_error("Size of the wavelengths don't corresspond to the size of nk values");
+void LCD1DMainBase::addOpticalUnaixialLayer(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum,
+    LCDOptics::OpticalMaterialClass _class){
 
 	LCDOptics::NKoNKeData nkSpectrum;
-	for (int i = 0; i < _spectrumLambdas.size(); ++i){
-		COMPD nko(_nokoSpectrum[i].real(), -1.0*_nokoSpectrum[i].imag());
-		COMPD nke(_nekeSpectrum[i].real(), -1.0*_nekeSpectrum[i].imag());
-		//make sure the k value us negative
-		nko.imag() =
-		nkSpectrum[_spectrumLambdas[i]] = std::make_tuple(nko, nke);
+	for (auto& data : _nkSpectrum){
+        if (data.second.size() != 2){
+            std::string msg = "Size of the nkSpectrum data for uniaxial material at wavelength ";
+            msg += toString(data.first);
+            msg += " is not 2.";
+            throw std::runtime_error(msg.c_str());
+        }
+        //make sure the k value is negative
+		COMPD nko(data.second[0].real(), -1.0*std::abs(data.second[0].imag()));
+		COMPD nke(data.second[1].real(), -1.0*std::abs(data.second[1].imag()));
+		nkSpectrum[data.first] = std::make_tuple(nko, nke);
 	}
 
 	materials.push_back(LCDOptics::Optical2x2IsoPtr(
 		new LCDOptics::Optical2x2IsoPtr::element_type(thick, nkSpectrum, _class)));
 }
 
-void LCD1DMainBase::addOpticalPolarizer(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nokoSpectrum, std::vector<std::complex<double> > _nekeSpectrum){
-    addOpticalUnaixialLayer(_thick, _spectrumLambdas, _nokoSpectrum, _nekeSpectrum, LCDOptics::OPT_POLARIZER);
+void LCD1DMainBase::addOpticalPolarizer(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum){
+    addOpticalUnaixialLayer(_thick, _nkSpectrum, LCDOptics::OPT_POLARIZER);
 }
 
-void LCD1DMainBase::addOpticalLC(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nokoSpectrum, std::vector<std::complex<double> > _nekeSpectrum){
-    addOpticalUnaixialLayer(_thick, _spectrumLambdas, _nokoSpectrum, _nekeSpectrum, LCDOptics::OPT_LCMATERIAL);
+void LCD1DMainBase::addOpticalLC(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum){
+    addOpticalUnaixialLayer(_thick, _nkSpectrum, LCDOptics::OPT_LCMATERIAL);
 }
 
 void setOpticalIncidentAngles(){
@@ -160,10 +151,21 @@ void enableOptical2X2Calculation(bool _ifDo){
 	ifCalculate2X2Optics = _ifDo;
 }
 
-void LCD1DMainBase::calculate(){
-
+void resetLCParam(const LCD1D:LCParamters _param){
+    if (!lcDir){
+        std::cout << "No LC calculation, change of LC parameters doesn't happen." << std::endl;
+        return
+    }
+    lcDir->resetConditions(_param);
+}
+void resetLCRubbing(const LCD1D:RubbingCondition _rubbing){
+    if (!lcDir){
+        std::cout << "No LC calculation, change of LC rubbing condition doesn't happen." << std::endl;
+        return
+    }
+    lcDir->resetConditions(_rubbing);
 }
 
 void LCD1DMainBase::createExtendedJones(){
-
+    
 }

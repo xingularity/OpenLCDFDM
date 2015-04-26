@@ -65,6 +65,8 @@ public:
     ///for single wabelength calculation
     void setOpticalWavelength(double _lambda);
     void setOpticalSourceSpectrum(LCDOptics::LIGHTSPECTRUMDATA _input);
+    void resetLCParam(const LCD1D:LCParamters _param);
+    void resetLCRubbing(const LCD1D:RubbingCondition _rubbing);
     void enableOptical2X2Calculation(bool _ifDo=true);
     virtual void calculate() = 0;
 protected:

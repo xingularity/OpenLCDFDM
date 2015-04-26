@@ -32,8 +32,13 @@
 
 #include "LCD1D_LCD1DMain.hpp"
 #include <omp.h>
+#include <limits>
 
 LCD1DMainBase::LCD1DMainBase(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing){
+	//TODO
+}
+
+LCD1DMainBase::LCD1DMainBase(){
 	//TODO
 }
 
@@ -52,7 +57,7 @@ void LCD1DMainBase::setOMPThreadNum(size_t _num){
 	omp_set_num_threads(num);
 }
 
-void LCD1DMainBase::addOpticalGlassLayer(double _thick, std::vector<double> _spectrumLambdas, std::vector<std::complex<double> > _nkSpectrum){
+void addOpticalGlassLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum){
 	addOpticalIsotropicLayer(_thick, _spectrumLambdas, _nkSpectrum, LCDOptics::OPT_GLASS);
 }
 
@@ -88,7 +93,7 @@ void LCD1DMainBase::addOpticalUnaixialLayer(double _thick, std::vector<double> _
 		nko.imag() =
 		nkSpectrum[_spectrumLambdas[i]] = std::make_tuple(nko, nke);
 	}
-	
+
 	materials.push_back(LCDOptics::Optical2x2IsoPtr(
 		new LCDOptics::Optical2x2IsoPtr::element_type(thick, nkSpectrum, _class)));
 }
@@ -101,22 +106,31 @@ void LCD1DMainBase::addOpticalLC(double _thick, std::vector<double> _spectrumLam
     addOpticalUnaixialLayer(_thick, _spectrumLambdas, _nokoSpectrum, _nekeSpectrum, LCDOptics::OPT_LCMATERIAL);
 }
 
-void LCD1DMainBase::setOpticalIncidentAngles(unsigned double _intervalDegree){
-    std::vector<double> thetas(1,0.0);
+void setOpticalIncidentAngles(){
+	inAngles.clear();
+	inAngles = std::vector< std::vector<Angle> >(1, std::vector<Angle>(1));
+	inAngles[0][0] = LCDOptics::makeAngle2(0.0, 0.0);
+}
+
+void setOpticalIncidentAngles(unsigned double _thetaInterval, unsigned double _phiInterval){
+	std::vector<double> thetas(1, 0.0);
     std::vector<double> phis(1, 0.0);
-    
-    while(thetas.back()+_intervalDegree <= (360+1.0e-13)){
-        thetas.push_back(thetas.back() + _intervalDegree);
+
+	double acc_error = std::numeric_limits<double>::epsilon()*360.0;
+
+    while(thetas.back()+_thetaInterval <= (360+acc_error)){
+        thetas.push_back(thetas.back() + _thetaInterval);
     };
-    
-    while(phis.back()+_intervalDegree <= (80+1.0e-13)){
-        phis.push_back(phis.back() + _intervalDegree);
+
+    while(phis.back()+_phiInterval <= (80+acc_error)){
+        phis.push_back(phis.back() + _phiInterval);
     };
 
     inAngles = std::vector< std::vector<Angle> >(thetas.size(), std::vector<Angle>(phis.size()));
     for (int i = 0; i <= thetas.size(); ++i)
         for(int j = 0; j <= phis.size(); ++j)
             inAngles[i][j] = LCDOptics::makeAngle2(thetas[i],phis[j]);
+
 }
 
 void LCD1DMainBase::setOpticalIncidentAngles(std::vector<std::pair<double, double> > _angles){
@@ -142,8 +156,12 @@ void LCD1DMainBase::setOpticalSourceSpectrum(LCDOptics::LIGHTSPECTRUMDATA _input
     lightSrcSpectrum = _input;
 }
 
+void enableOptical2X2Calculation(bool _ifDo){
+	ifCalculate2X2Optics = _ifDo;
+}
+
 void LCD1DMainBase::calculate(){
-    
+
 }
 
 void LCD1DMainBase::createExtendedJones(){

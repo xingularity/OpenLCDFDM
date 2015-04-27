@@ -34,13 +34,15 @@
 #include <omp.h>
 #include <limits>
 
-LCD1DMainBase::LCD1DMainBase(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing){
-	//TODO
+LCD1DMainBase::LCD1DMainBase(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing){
+	dt = _dt;
+	epsilonr.reset(new LCD1D::Epsilon(_lcLayerNum, _lcParam.thick);
+	potentials.reset(new LCD1D::Potential(_lcLayerNum+1, *epsilonr, _lcParam.thick/_lcLayerNum));
+	lcDir.reset(new LCD1D::LCDirector(_lcLayerNum, _lcParam, _rubbing, *epsilonr));
+	lcDirector.createVectorFormUpdater(potential, dt);
 }
 
-LCD1DMainBase::LCD1DMainBase(){
-	//TODO
-}
+LCD1DMainBase::LCD1DMainBase(){}
 
 void LCD1DMainBase::setTFTPI(LCD1D::DielecParameters _tftpi){
 	epsilonr->setTFTPI(_tftpi);
@@ -57,26 +59,33 @@ void LCD1DMainBase::setOMPThreadNum(size_t _num){
 	omp_set_num_threads(num);
 }
 
-void LCD1DMainBase::addOpticalGlassLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum){
-	addOpticalIsotropicLayer(_thick, _nkSpectrum, LCDOptics::OPT_GLASS);
+size_t LCD1DMainBase::addOpticalGlassLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum, int pos){
+	return addOpticalIsotropicLayer(_thick, _nkSpectrum, LCDOptics::OPT_GLASS, pos);
 }
 
-void LCD1DMainBase::addOpticalIsotropicLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum,
-    LCDOptics::OpticalMaterialClass _class){
-
-	materials.push_back(LCDOptics::Optical2x2IsoPtr(
-		new LCDOptics::Optical2x2IsoPtr::element_type(thick, _nkSpectrum, _class)));
+size_t LCD1DMainBase::addOpticalIsotropicLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum,
+    LCDOptics::OpticalMaterialClass _class, int pos){
+	if (pos < 0) || (pos >= materials.size()){
+		materials.push_back(LCDOptics::Optical2x2IsoPtr(
+			new LCDOptics::Optical2x2IsoPtr::element_type(thick, _nkSpectrum, _class)));
+		return materials.size()-1;
+	}
+	else{
+		materials.insert(materials.begin() + pos, LCDOptics::Optical2x2IsoPtr(
+			new LCDOptics::Optical2x2IsoPtr::element_type(thick, _nkSpectrum, _class)));
+		return pos;
+	}
 }
 
-void LCD1DMainBase::addOpticalUnaixialLayer(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum,
-    LCDOptics::OpticalMaterialClass _class){
+size_t LCD1DMainBase::addOpticalUnaixialLayer(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum,
+    LCDOptics::OpticalMaterialClass _class, LCD::DOUBLEARRAY2D _axes, int pos){
 
 	LCDOptics::NKoNKeData nkSpectrum;
 	for (auto& data : _nkSpectrum){
         if (data.second.size() != 2){
             std::string msg = "Size of the nkSpectrum data for uniaxial material at wavelength ";
             msg += toString(data.first);
-            msg += " is not 2.";
+    l    	msg += " is not 2.";
             throw std::runtime_error(msg.c_str());
         }
         //make sure the k value is negative
@@ -85,16 +94,44 @@ void LCD1DMainBase::addOpticalUnaixialLayer(double _thick, std::map<double, std:
 		nkSpectrum[data.first] = std::make_tuple(nko, nke);
 	}
 
-	materials.push_back(LCDOptics::Optical2x2IsoPtr(
-		new LCDOptics::Optical2x2IsoPtr::element_type(thick, nkSpectrum, _class)));
+	DIRVEC axes;
+	axes.resize(axes.size());
+	for (int i = 0; i < axes.extent(0); ++i){
+		if (_axes[i].size() != 2)
+			throw std::runtime_error("incorrect number of angles of optical axis in setting uniaxial layer");
+		axes(i)(0) = sin(_axes[i][0])*cos(_axes[i][1]);
+		axes(i)(1) = sin(_axes[i][0])*sin(_axes[i][1]);
+		axes(i)(2) = cos(_axes[i][0]);
+	}
+
+	if (pos < 0) || (pos >= materials.size()){
+		materials.push_back(LCDOptics::Optical2x2UnixialPtr(
+			new LCDOptics::Optical2x2UnixialPtr::element_type(thick, nkSpectrum, _class)));
+		(materials.back())->resetAxes(axes);
+		return materials.size() - 1;
+	}
+	else{
+		materials.insert(materials.begin() + pos, LCDOptics::Optical2x2UnixialPtr(
+			new LCDOptics::Optical2x2UnixialPtr::element_type(thick, nkSpectrum, _class)));
+		(materials[pos])->resetAxes(axes);
+		return pos;
+	}
 }
 
-void LCD1DMainBase::addOpticalPolarizer(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum){
-    addOpticalUnaixialLayer(_thick, _nkSpectrum, LCDOptics::OPT_POLARIZER);
+size_t LCD1DMainBase::addOpticalPolarizer(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum, LCD::DOUBLEARRAY2D _axes, int pos){
+    return addOpticalUnaixialLayer(_thick, _nkSpectrum, LCDOptics::OPT_POLARIZER, _axes, pos);
 }
 
-void LCD1DMainBase::addOpticalLC(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum){
-    addOpticalUnaixialLayer(_thick, _nkSpectrum, LCDOptics::OPT_LCMATERIAL);
+size_t LCD1DMainBase::addOpticalLC(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum, int pos){
+    return addOpticalUnaixialLayer(_thick, _nkSpectrum, LCDOptics::OPT_LCMATERIAL, LCD::DOUBLEARRAY2D(0), pos);
+}
+
+void LCD1DMainBase::removeOpticalLayer(size_t _index){
+	if (_index > materials.size() -1){
+		std::string msg = "No such optical layer: " + toString(_index);
+		throw std::runtime_error(msg.c_str());
+	}
+	materials.pop(_index);
 }
 
 void setOpticalIncidentAngles(){
@@ -132,33 +169,51 @@ void LCD1DMainBase::setOpticalIncidentAngles(std::vector<std::pair<double, doubl
         inAngles[0].push_back(LCDOptics::makeAngle2(i.first, i.second));
 }
 
-void LCD1DMainBase::setOpticalWavelength(double _lambda_start, double _lambda_end, double _lambda_step){
+void LCD1DMainBase::setOpticalWavelength(unsigned double _lambda_start, unsigned double _lambda_end, unsigned double _lambda_step){
+	if (_lambda_end < _lambda_start){
+		double temp = _lambda_end;
+		_lambda_end = _lambda_start;
+		_lambda_start = temp;
+	}
+
+	if (_lambda_step > (_lambda_end - _lambda_start)){
+		_lambda_step = (_lambda_end - _lambda_start)*0.1;
+	}
+
     multiWavelengthLambdas = std::make_tuple(_lambda_start, _lambda_end, _lambda_step);
 }
-void LCD1DMainBase::setOpticalWavelength(double _lambda){
-    multiWavelengthLambdas = std::make_tuple(_lambda, _lambda, 0);
-}
 
-void LCD1DMainBase::disableOpticalCalculation(){
-    multiWavelengthLambdas = std::make_tuple(0.0,0.0,0.0);
+void LCD1DMainBase::setOpticalWavelength(unsigned double _lambda){
+    multiWavelengthLambdas = std::make_tuple(_lambda, _lambda, 0);
 }
 
 void LCD1DMainBase::setOpticalSourceSpectrum(LCDOptics::LIGHTSPECTRUMDATA _input){
     lightSrcSpectrum = _input;
 }
 
-void enableOptical2X2Calculation(bool _ifDo){
+void LCD1DMainBase::enableOptical2X2Calculation(bool _ifDo){
 	ifCalculate2X2Optics = _ifDo;
+	if (ifCalculate2X2Optics)
+		createExtendedJones();
 }
 
-void resetLCParam(const LCD1D:LCParamters _param){
+void LCD1DMainBase::useOptical2X2Lambertian(bool _if=true){
+	ifUseLambertian = _if;
+}
+
+void LCD1DMainBase::resetLCParam(const LCD1D:LCParamters _param){
     if (!lcDir){
         std::cout << "No LC calculation, change of LC parameters doesn't happen." << std::endl;
         return
     }
-    lcDir->resetConditions(_param);
+
+	lcDir->resetConditions(_param);
+
+	if (extJonesMain){
+		extJonesMain->resetLCThickness(_param.thick);
+	}
 }
-void resetLCRubbing(const LCD1D:RubbingCondition _rubbing){
+void LCD1DMainBase::resetLCRubbing(const LCD1D:RubbingCondition _rubbing){
     if (!lcDir){
         std::cout << "No LC calculation, change of LC rubbing condition doesn't happen." << std::endl;
         return
@@ -167,5 +222,100 @@ void resetLCRubbing(const LCD1D:RubbingCondition _rubbing){
 }
 
 void LCD1DMainBase::createExtendedJones(){
-    
+	if (!ifCalculate2X2Optics) return;
+	double lambda_start, lambda_end, lambda_step;
+	std::tie(lambda_start, lambda_end, lambda_step) = multiWavelengthLambdas;
+	//TODO: provide Stokes calculation support
+	if (lambda_start == lambda_end){
+		//single wavelength calculation
+		extJonesMain.reset(new ExtendedJones(materials, inAngles, lambda_start, lightSrcSpectrum, ifUseLambertian, false));
+	}
+	else{
+		extJonesMain.reset(new ExtendedJones(materials, inAngles, lambda_start, lambda_end, lambda_step,
+			lightSrcSpectrum, ifUseLambertian, false));
+	}
+}
+
+std::vector<std::vector<std::pair<double, double> > > LCD1DMainBase::getIncidentAngles()const{
+	std::vector<std::vector<std::pair<double, double> > > answer;
+	std::vector<std::pair<double, double> > temp;
+	std::pair<double, double> tp;
+	for (auto& i : inAngles){
+		temp.clear();
+		for(auto& j : i){
+			std::tie(tp.first, tp.second) = j;
+			temp.push_back(tp);
+		}
+		answer.push_back(temp);
+	}
+	return answer;
+}
+
+LCD1DStaticMain::LCD1DStaticMain(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing,
+	double _voltStart, double _voltEnd, unsigned double _voltStep, double _maxIter, double _maxError)
+	:LCD1DMainBase(_lcLayerNum, _dt, _lcParam, _rubbing), maxIter(_maxIter), maxError(_maxError){
+		potentials.createStaticUpdatePolicy();
+	}
+
+LCD1DStaticMain::LCD1DStaticMain():LCD1DMainBase(){}
+
+LCD::DOUBLEARRAY1D LCD1DStaticMain::getCalcVolts() const{
+	return calcVolts;
+}
+
+std::vector<LCDOptics::TRANSRESULT> LCD1DStaticMain::getTransmissions()const{
+	return transResults;
+}
+
+std::vector<DOUBLEARRAY2D> LCD1DStaticMain::getLCDirResults()const{
+	return lcDirResult;
+}
+
+void LCD1DStaticMain::resetCalcVolts(double _voltStart, double _voltEnd, unsigned double _voltStep){
+	calcVolts.clear();
+	if (_voltEnd < _voltStart){
+		double temp = _voltEnd;
+		_voltEnd = _voltStart;
+		_voltStart = temp;
+	}
+
+	for (double i = _voltStart; i <= _voltEnd + std::numeric_limits<double>::epsilon()*1000; i+=_voltStep){
+		calcVolts.push_back(i);
+	}
+}
+
+virtual void LCD1DStaticMain::calculate(){
+	double residual = std::numeric_limits<double>::max();
+	//empty the resut storage
+	lcDirResult.clear();
+	transResults.clear();
+	for (auto volt: calcVolts){
+		calculateOneVolt(volt);
+		LCD1D::DIRVEC lcDir(lcDir->getDirectors());
+		calc2X2OpticsOneSetLCDir(lcDir);
+	}
+}
+
+double LCD1DStaticMain::calculateOneVolt(double _volt){
+	double residual = std::numeric_limits<double>::max();
+    //writeDirectors(lcDirector.getDirectors(), "_TNNoq0_"+toString(dc_volt)+"V_initialized_");
+	unsigned long iternum = 0;
+    while(residual >= maxError){
+		if (iternum > maxIter){
+			std::string msg;
+			msg+="Static calculation does not converge when D.C. volt = ";
+			msg+=toString(volt) + ".";
+			throw std::runtime_error(msg.c_str());
+		}
+        potential.update(_volt);
+        residual = lcDir->update();
+		iternum++;
+    };
+	return residual;
+}
+
+void LCD1DStaticMain::calc2X2OpticsOneSetLCDir(LCD::DIRVEC lcDir){
+	extJonesMain->resetLCDiretors(lcDir);
+	extJonesMain->calculateExtendedJones();
+	transResults.push_back(extJonesMain->getTransmissions());
 }

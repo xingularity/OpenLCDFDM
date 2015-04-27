@@ -12,8 +12,8 @@
  *     notice, this list of conditions and the following disclaimer in
  *     the documentation and/or other materials provided with the
  *     distribution.
- *   * Neither the name of OpenLCDFDM nor the names of its contributors 
- *     may be used to endorse or promote products derived from this 
+ *   * Neither the name of OpenLCDFDM nor the names of its contributors
+ *     may be used to endorse or promote products derived from this
  *     software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -247,5 +247,14 @@ void ExtendedJones::resetLCDiretors(DIRVEC _in){
         tempLayerPtr = std::dynamic_pointer_cast<LCDOptics::Optical2X2OneLayer<LCDOptics::UniaxialType>,
             LCDOptics::Optical2X2OneLayerBase>(matLayers[lcLayerindex]);
         if (tempLayerPtr) tempLayerPtr->resetAxes(_in);
+    }
+}
+
+void ExtendedJones::resetLCThickness(double _d){
+    if (lcLayerindex >= 0){
+        LCDOptics::Optical2x2UnixialPtr tempLayerPtr;
+        tempLayerPtr = std::dynamic_pointer_cast<LCDOptics::Optical2X2OneLayer<LCDOptics::UniaxialType>,
+            LCDOptics::Optical2X2OneLayerBase>(matLayers[lcLayerindex]);
+        if (tempLayerPtr) tempLayerPtr->resetThickness(_d);
     }
 }

@@ -48,12 +48,13 @@ public:
     void setCFPI(LCD1D::DielecParameters _cfpi={0.0,0.0});
     ///set openMP thread numbers
     void setOMPThreadNum(size_t _num);
-    void addOpticalGlassLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum);
-    void addOpticalIsotropicLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum, LCDOptics::OpticalMaterialClass _class);
-    void addOpticalPolarizer(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum);
-    void addOpticalUnaixialLayer(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum,
-        LCDOptics::OpticalMaterialClass _class);
-    void addOpticalLC(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum);
+    size_t addOpticalGlassLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum, int pos = -1);
+    size_t addOpticalIsotropicLayer(double _thick, std::map<double, std::complex<double> > _nkSpectrum, LCDOptics::OpticalMaterialClass _class, int pos = -1);
+    size_t addOpticalPolarizer(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum, LCD::DOUBLEARRAY2D _axes, int pos = -1);
+    size_t addOpticalUnaixialLayer(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum,
+        LCDOptics::OpticalMaterialClass _class, LCD::DOUBLEARRAY2D _axes = LCD::DOUBLEARRAY2D(), int pos = -1);
+    size_t addOpticalLC(double _thick, std::map<double, std::vector<std::complex<double> > > _nkSpectrum, int pos = -1);
+    void removeOpticalLayer(size_t _index);
     ///set incident angle in the optical calculation to normal incident only
     void setOpticalIncidentAngles();
     ///Using scan interval degree to decide which angles to do.
@@ -61,17 +62,20 @@ public:
     ///input multiple incident angles without fix intervlas
     void setOpticalIncidentAngles(std::vector<std::pair<double, double> > _angles);
     ///for multiwavelength calculation
-    void setOpticalWavelength(double _lambda_start, double _lambda_end, double _lambda_step);
+    void setOpticalWavelength(unsigned double _lambda_start, unsigned double _lambda_end, unsigned double _lambda_step);
     ///for single wabelength calculation
-    void setOpticalWavelength(double _lambda);
+    void setOpticalWavelength(unsigned double _lambda);
     void setOpticalSourceSpectrum(LCDOptics::LIGHTSPECTRUMDATA _input);
     void resetLCParam(const LCD1D:LCParamters _param);
     void resetLCRubbing(const LCD1D:RubbingCondition _rubbing);
     void enableOptical2X2Calculation(bool _ifDo=true);
+    void useOptical2X2Lambertian(bool _if=true);
+    ///incident angles. originally using tuples, return std::pairs for Cython.
+    std::vector<std::vector<std::pair<double, double> > > getIncidentAngles()const;
     virtual void calculate() = 0;
 protected:
     ///This constructor will calculate LC
-    LCD1DMainBase(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing);
+    LCD1DMainBase(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing);
     ///This constructor will not calculate LC (No FDM calculation).
     LCD1DMainBase();
     void createExtendedJones();
@@ -82,10 +86,12 @@ protected:
     LCDOptics::MATERIALLAYERS2X2CONT materials;
     LCDOptics::IAngles inAngles;
     LCDOptics::LIGHTSPECTRUMDATA lightSrcSpectrum;
-    ///They are lambda_start, lambda_end, lambda_step, if lambda_step == 0, it's single wavelength calculation.
-    ///If all three are zero, no optical calculation should be performed.
-    std::tuple<double, double, double> multiWavelengthLambdas = {0.0,0.0,0.0};
+    ///They are lambda_start, lambda_end, lambda_step, if lambda_start == lambda_end, it's single wavelength calculation.
+    ///default calculate 550nm single wavelength.
+    std::tuple<double, double, double> multiWavelengthLambdas = {0.55,0.55,0.0};
     bool ifCalculate2X2Optics = false;
+    bool ifUseLambertian = false;
+    double dt;
 };
 
 /**
@@ -94,8 +100,8 @@ Doing static LCD simulation
 class LCD1DStaticMain: public LCD1DMainBase{
 public:
     ///with LC calculation
-    LCD1DStaticMain(double _lcLayerNum, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing,
-        double _voltStart, double _voltEnd, double _voltStep, double _maxIter, double _error);
+    LCD1DStaticMain(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing,
+        double _voltStart, double _voltEnd, unsigned double _voltStep, double _maxIter, double _maxError);
     ///No LC calculation, optical calculation only
     LCD1DStaticMain();
     ///vector records which voltages are calculated.
@@ -106,12 +112,18 @@ public:
     std::vector<std::vector<std::pair<double, double> > > getIncidentAngles()const;
     ///[volts index][z-grid index][component index]
     std::vector<DOUBLEARRAY2D> getLCDirResults()const;
+    ///reset scanning voltages
+    void resetCalcVolts(double _voltStart, double _voltEnd, unsigned double _voltStep);
+    ///main function
     virtual void calculate();
+
 private:
+    double calculateOneVolt(double _volt);
+    void calc2X2OpticsOneSetLCDir(LCD::DIRVEC lcDir);
     double maxIter;
-    double error;
+    double maxError;
     LCD::DOUBLEARRAY1D  calcVolts;
-    std::vector<DOUBLEARRAY2D> lcDirResult;
+    std::vector<LCD::DOUBLEARRAY2D> lcDirResult;
     std::vector<LCDOptics::TRANSRESULT> transResults;
 };
 

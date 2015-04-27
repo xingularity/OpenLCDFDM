@@ -69,6 +69,7 @@ namespace LCDOptics{
             axisVec.resize(_in.size());
             axisVec = _in;
         }
+        void resetThickness(double _thick){d = thick;}
     protected:
         ///calculate polarizations based on input Jones matrix
         void calculatePolarization(const EigenC22& m, POLARTRACE& lightPolar){

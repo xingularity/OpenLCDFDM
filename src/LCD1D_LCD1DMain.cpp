@@ -38,8 +38,9 @@ LCD1DMainBase::LCD1DMainBase(double _lcLayerNum, double _dt, LCD1D::LCParamters 
 	dt = _dt;
 	epsilonr.reset(new LCD1D::Epsilon(_lcLayerNum, _lcParam.thick);
 	potentials.reset(new LCD1D::Potential(_lcLayerNum+1, *epsilonr, _lcParam.thick/_lcLayerNum));
+	potentials->createStaticUpdatePolicy();
 	lcDir.reset(new LCD1D::LCDirector(_lcLayerNum, _lcParam, _rubbing, *epsilonr));
-	lcDirector.createVectorFormUpdater(potential, dt);
+	lcDir->createVectorFormUpdater(*potential, dt);
 }
 
 LCD1DMainBase::LCD1DMainBase(){}
@@ -201,17 +202,39 @@ void LCD1DMainBase::useOptical2X2Lambertian(bool _if=true){
 	ifUseLambertian = _if;
 }
 
-void LCD1DMainBase::resetLCParam(const LCD1D:LCParamters _param){
-    if (!lcDir){
+void LCD1DMainBase::resetLCParam(const LCD1D:LCParamters _param, const size_t _lcLayerNum, const double _dt){
+	dt = _dt;
+
+	if (!lcDir){
         std::cout << "No LC calculation, change of LC parameters doesn't happen." << std::endl;
         return
     }
 
-	lcDir->resetConditions(_param);
-
-	if (extJonesMain){
-		extJonesMain->resetLCThickness(_param.thick);
+	//find LC layer in optical layers
+	int lcLayerindex = -1;
+	for (int i = 0; i < materials.size(); ++i){
+		LCDOptics::Optical2X2OneLayer<LCDOptics::UniaxialType>* sp =
+		    dynamic_cast<LCDOptics::Optical2X2OneLayer<LCDOptics::UniaxialType>*> (materials[i].get());
+		if (sp == NULL) continue;
+		if (sp->opticalLayerKind() == LCDOptics::OPT_LCMATERIAL) {
+			lcLayerindex = i;
+			break;
+		}
 	}
+
+	if (lcLayerindex > -1){
+		materials[lcLayerindex] -> resetThickness(_param.thick);
+	}
+
+	createExtendedJones();
+
+	LCD1D::RubbingCondition rubbing = lcDir->getLCRubbing();
+	//create new objects
+	epsilonr.reset(new LCD1D::Epsilon(_lcLayerNum, _param.thick);
+	potentials.reset(new LCD1D::Potential(_lcLayerNum+1, *epsilonr, _param.thick/_lcLayerNum));
+	potentials->createStaticUpdatePolicy();
+	lcDir.reset(new LCD1D::LCDirector(_lcLayerNum, _param, rubbing, *epsilonr));
+	lcDir->createVectorFormUpdater(*potential, dt);
 }
 void LCD1DMainBase::resetLCRubbing(const LCD1D:RubbingCondition _rubbing){
     if (!lcDir){
@@ -234,6 +257,7 @@ void LCD1DMainBase::createExtendedJones(){
 		extJonesMain.reset(new ExtendedJones(materials, inAngles, lambda_start, lambda_end, lambda_step,
 			lightSrcSpectrum, ifUseLambertian, false));
 	}
+	//The optical axes for LC layer hasn't been initialized yet.
 }
 
 std::vector<std::vector<std::pair<double, double> > > LCD1DMainBase::getIncidentAngles()const{
@@ -254,7 +278,7 @@ std::vector<std::vector<std::pair<double, double> > > LCD1DMainBase::getIncident
 LCD1DStaticMain::LCD1DStaticMain(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing,
 	double _voltStart, double _voltEnd, unsigned double _voltStep, double _maxIter, double _maxError)
 	:LCD1DMainBase(_lcLayerNum, _dt, _lcParam, _rubbing), maxIter(_maxIter), maxError(_maxError){
-		potentials.createStaticUpdatePolicy();
+		potentials->createStaticUpdatePolicy();
 	}
 
 LCD1DStaticMain::LCD1DStaticMain():LCD1DMainBase(){}
@@ -289,10 +313,18 @@ virtual void LCD1DStaticMain::calculate(){
 	//empty the resut storage
 	lcDirResult.clear();
 	transResults.clear();
+	LCD::DOUBLEARRAY2D lcDirTemp;
 	for (auto volt: calcVolts){
 		calculateOneVolt(volt);
-		LCD1D::DIRVEC lcDir(lcDir->getDirectors());
-		calc2X2OpticsOneSetLCDir(lcDir);
+		LCD1D::DIRVEC directors(lcDir->getDirectors());
+		lcDirTemp.resize(directors.extent(0), std::vector<double>(3));
+		for (int i = 0; i < lcDir.extent(0); ++i){
+			lcDirTemp[i][0] = directors(i)(0);
+			lcDirTemp[i][1] = directors(i)(1);
+			lcDirTemp[i][2] = directors(i)(2);
+		}
+		lcDirResult.push_back(lcDirTemp);
+		calc2X2OpticsOneSetLCDir(directors);
 	}
 }
 
@@ -307,15 +339,100 @@ double LCD1DStaticMain::calculateOneVolt(double _volt){
 			msg+=toString(volt) + ".";
 			throw std::runtime_error(msg.c_str());
 		}
-        potential.update(_volt);
+        potentials->update(_volt);
         residual = lcDir->update();
 		iternum++;
     };
 	return residual;
 }
 
-void LCD1DStaticMain::calc2X2OpticsOneSetLCDir(LCD::DIRVEC lcDir){
-	extJonesMain->resetLCDiretors(lcDir);
+void LCD1DStaticMain::calc2X2OpticsOneSetLCDir(LCD::DIRVEC directors){
+	if (!extJonesMain) return;
+	extJonesMain->resetLCDiretors(directors);
+	extJonesMain->calculateExtendedJones();
+	transResults.push_back(extJonesMain->getTransmissions());
+}
+
+LCD1DDynamicMain::LCD1DDynamicMain(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing, double _maxCalcTime):LCD1DMainBase(_lcLayerNum, _dt, _lcParam, _rubbing), maxCalcTime(_maxCalcTime){
+	//put a default one first
+	waveform.reset(new LCD::DCWaveform(0.0));
+	potentials->createDynamicUpdatePolicy(waveform);
+}
+
+void LCD1DDynamicMain::setRecordTime(LCD::DOUBLEARRAY1D steps){
+	rsteps.clear();
+	//record initial
+	rsteps.insert(0);
+	for (auto& i: steps)
+		rsteps.insert(std::floor(i/dt));
+}
+
+void LCD1DDynamicMain::setRecordInterval(double _interval){
+	rsteps.clear();
+	unsigned long step = 0;
+	unsigned long last_add_step = 0;
+	double stepTime;
+	rsteps.insert(0);
+	while(true){
+		++step;
+		if ((step*dt - last_add_step*dt) >= _interval){
+			last_add_step = step;
+			rsteps.insert(step);
+		}
+		if (step*dt > maxCalcTime)
+		    break;
+	}
+}
+
+void LCD1DDynamicMain::setDCWaveform(double _volt){
+	waveform.reset(new LCD::DCWaveform(_volt));
+	potentials->createDynamicUpdatePolicy(waveform);
+}
+
+void LCD1DDynamicMain::setStepWaveform(std::map<double, double> _profile, double period){
+	waveform.reset(new LCD::StepWaveform(_profile, period));
+	potentials->createDynamicUpdatePolicy(waveform);
+}
+
+LCD::DOUBLEARRAY1D LCD1DDynamicMain::getRecordStep() const{
+	return recordSteps;
+}
+
+LCD::DOUBLEARRAY1D LCD1DDynamicMain::getRecordTime() const{
+	return recordTimes;
+}
+
+std::vector<LCDOptics::TRANSRESULT> LCD1DDynamicMain::getTransmissions()const{
+	return transResults;
+}
+
+std::vector<DOUBLEARRAY2D> LCD1DDynamicMain::getLCDirResults()const{
+	return lcDirResult;
+}
+
+void LCD1DDynamicMain::calculate(){
+	//empty the resut storage
+	lcDirResult.clear();
+	transResults.clear();
+	recordSteps.clear();
+	recordTimes.clear();
+
+	LCD::DOUBLEARRAY2D lcDirTemp;
+	calculateOneVolt(volt);
+	LCD1D::DIRVEC directors(lcDir->getDirectors());
+	lcDirTemp.resize(directors.extent(0), std::vector<double>(3));
+	for (int i = 0; i < lcDir.extent(0); ++i){
+		lcDirTemp[i][0] = directors(i)(0);
+		lcDirTemp[i][1] = directors(i)(1);
+		lcDirTemp[i][2] = directors(i)(2);
+	}
+	lcDirResult.push_back(lcDirTemp);
+	calc2X2OpticsOneSetLCDir(directors);
+}
+
+void LCD1DDynamicMain::calc2X2OpticsOneSetLCDir(LCD::DIRVEC directors){
+	if (!extJonesMain) return;
+	extJonesMain->resetLCDiretors(directors);
 	extJonesMain->calculateExtendedJones();
 	transResults.push_back(extJonesMain->getTransmissions());
 }

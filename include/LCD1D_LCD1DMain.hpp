@@ -112,7 +112,7 @@ public:
     ///[volts index][z-grid index][component index]
     std::vector<LCD::DOUBLEARRAY2D> getLCDirResults()const;
     //return the records of the transmissions of normal incident lights.
-    LCD::DOUBLEARRAY1D getNormalTRansmissions()const;
+    LCD::DOUBLEARRAY1D getNormalTransmissions()const;
     ///reset scanning voltages
     void resetCalcVolts(double _voltStart, double _voltEnd, double _voltStep);
     ///main function
@@ -152,7 +152,7 @@ public:
     ///[record time index][z-grid index][component index]
     std::vector<LCD::DOUBLEARRAY2D> getLCDirResults()const;
     //return the records of the transmissions of normal incident lights.
-    LCD::DOUBLEARRAY1D getNormalTRansmissions()const;
+    LCD::DOUBLEARRAY1D getNormalTransmissions()const;
     virtual void calculate();
 private:
     ///record steps

@@ -308,7 +308,7 @@ void LCD1DStaticMain::resetCalcVolts(double _voltStart, double _voltEnd, double 
 	}
 }
 
-LCD::DOUBLEARRAY1D LCD1DStaticMain::getNormalTRansmissions()const{
+LCD::DOUBLEARRAY1D LCD1DStaticMain::getNormalTransmissions()const{
 	return normalTransmissions;
 }
 
@@ -422,7 +422,7 @@ std::vector<LCD::DOUBLEARRAY2D> LCD1DDynamicMain::getLCDirResults()const{
 	return lcDirResults;
 }
 
-LCD::DOUBLEARRAY1D LCD1DDynamicMain::getNormalTRansmissions()const{
+LCD::DOUBLEARRAY1D LCD1DDynamicMain::getNormalTransmissions()const{
 	return normalTransmissions;
 }
 

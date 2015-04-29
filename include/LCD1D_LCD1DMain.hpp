@@ -111,6 +111,8 @@ public:
     std::vector<LCD1D::TRANSRESULT> getTransmissions()const;
     ///[volts index][z-grid index][component index]
     std::vector<LCD::DOUBLEARRAY2D> getLCDirResults()const;
+    //return the records of the transmissions of normal incident lights.
+    LCD::DOUBLEARRAY1D getNormalTRansmissions()const;
     ///reset scanning voltages
     void resetCalcVolts(double _voltStart, double _voltEnd, double _voltStep);
     ///main function
@@ -124,6 +126,7 @@ private:
     LCD::DOUBLEARRAY1D  calcVolts;
     std::vector<LCD::DOUBLEARRAY2D> lcDirResults;
     std::vector<LCD1D::TRANSRESULT> transResults;
+    LCD::DOUBLEARRAY1D normalTransmissions;
 };
 
 /**
@@ -141,13 +144,15 @@ public:
     ///set step waveform if one want to use step waveform profile to simulate.
     void setStepWaveform(std::map<double, double> _profile, double period);
     ///vector records which step data are recorded at.
-    LCD::DOUBLEARRAY1D getRecordStep() const;
+    std::vector<size_t> getRecordStep() const;
     ///vector records which time (in ms) data are recorded at.
     LCD::DOUBLEARRAY1D getRecordTime() const;
     ///std::vector 3D container. [records index][iAngle index][iAngle index]
     std::vector<LCD1D::TRANSRESULT> getTransmissions()const;
     ///[record time index][z-grid index][component index]
     std::vector<LCD::DOUBLEARRAY2D> getLCDirResults()const;
+    //return the records of the transmissions of normal incident lights.
+    LCD::DOUBLEARRAY1D getNormalTRansmissions()const;
     virtual void calculate();
 private:
     ///record steps
@@ -156,10 +161,11 @@ private:
     void calc2X2OpticsOneSetLCDir(LCD::DIRVEC directors);
     std::shared_ptr<LCD::WaveformBase> waveform;
     double maxCalcTime;
-    LCD::DOUBLEARRAY1D recordSteps;
+    std::vector<size_t> recordSteps;
     LCD::DOUBLEARRAY1D recordTimes;
     std::vector<LCD::DOUBLEARRAY2D> lcDirResults;
     std::vector<LCD1D::TRANSRESULT> transResults;
+    LCD::DOUBLEARRAY1D normalTransmissions;
 };
 
 #endif

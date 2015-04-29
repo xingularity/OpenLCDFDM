@@ -308,6 +308,10 @@ void LCD1DStaticMain::resetCalcVolts(double _voltStart, double _voltEnd, double 
 	}
 }
 
+LCD::DOUBLEARRAY1D LCD1DStaticMain::getNormalTRansmissions()const{
+	return normalTransmissions;
+}
+
 void LCD1DStaticMain::calculate(){
 	double residual = std::numeric_limits<double>::max();
 	//empty the resut storage
@@ -351,6 +355,13 @@ void LCD1DStaticMain::calc2X2OpticsOneSetLCDir(LCD::DIRVEC directors){
 	extJonesMain->resetLCDiretors(directors);
 	extJonesMain->calculateExtendedJones();
 	transResults.push_back(extJonesMain->getTransmissions());
+	LCD1D::TRANSRESULT& temp = transResults.back();
+	double theta;
+	double phi;
+	std::tie(theta, phi) = inAngles[0][0];
+	if ((std::abs(theta) <= std::numeric_limits<double>::epsilon()) && (std::abs(theta) <= std::numeric_limits<double>::epsilon())){
+		normalTransmissions.push_back(temp[0][0]);
+	}
 }
 
 LCD1DDynamicMain::LCD1DDynamicMain(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing, double _maxCalcTime):
@@ -395,7 +406,7 @@ void LCD1DDynamicMain::setStepWaveform(std::map<double, double> _profile, double
 	potentials->createDynamicUpdatePolicy(waveform);
 }
 
-LCD::DOUBLEARRAY1D LCD1DDynamicMain::getRecordStep() const{
+std::vector<size_t> LCD1DDynamicMain::getRecordStep() const{
 	return recordSteps;
 }
 
@@ -409,6 +420,10 @@ std::vector<LCD1D::TRANSRESULT> LCD1DDynamicMain::getTransmissions()const{
 
 std::vector<LCD::DOUBLEARRAY2D> LCD1DDynamicMain::getLCDirResults()const{
 	return lcDirResults;
+}
+
+LCD::DOUBLEARRAY1D LCD1DDynamicMain::getNormalTRansmissions()const{
+	return normalTransmissions;
 }
 
 void LCD1DDynamicMain::calculate(){
@@ -428,7 +443,8 @@ void LCD1DDynamicMain::calculate(){
 
 void LCD1DDynamicMain::checkStepsToDumpAndCalcOptics(size_t iternum){
 	if (rsteps.find(iternum) == rsteps.end()) return;
-
+	recordSteps.push_back(iternum);
+	recordTimes.push_back(iternum*dt);
 	LCD1D::DIRVEC directors(lcDir->getDirectors());
 	LCD::DOUBLEARRAY2D lcDirTemp;
 	lcDirTemp.resize(directors.extent(0), std::vector<double>(3));
@@ -446,4 +462,11 @@ void LCD1DDynamicMain::calc2X2OpticsOneSetLCDir(LCD::DIRVEC directors){
 	extJonesMain->resetLCDiretors(directors);
 	extJonesMain->calculateExtendedJones();
 	transResults.push_back(extJonesMain->getTransmissions());
+	LCD1D::TRANSRESULT& temp = transResults.back();
+	double theta;
+	double phi;
+	std::tie(theta, phi) = inAngles[0][0];
+	if ((std::abs(theta) <= std::numeric_limits<double>::epsilon()) && (std::abs(theta) <= std::numeric_limits<double>::epsilon())){
+		normalTransmissions.push_back(temp[0][0]);
+	}
 }

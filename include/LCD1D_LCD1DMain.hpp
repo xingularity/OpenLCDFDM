@@ -36,6 +36,7 @@
 #include <omp.h>
 #include <ctime>
 #include <stdexcept>
+#include <set>
 #include "LCD1D_ExtendedJones.hpp"
 #include "LCD_UsefulFuncs.hpp"
 #include "LCD1D_FDM1DSolver.hpp"
@@ -58,16 +59,16 @@ public:
     ///set incident angle in the optical calculation to normal incident only
     void setOpticalIncidentAngles();
     ///Using scan interval degree to decide which angles to do.
-    void setOpticalIncidentAngles(unsigned double _thetaInterval, unsigned double _phiInterval);
+    void setOpticalIncidentAngles(double _thetaInterval, double _phiInterval);
     ///input multiple incident angles without fix intervlas
     void setOpticalIncidentAngles(std::vector<std::pair<double, double> > _angles);
     ///for multiwavelength calculation
-    void setOpticalWavelength(unsigned double _lambda_start, unsigned double _lambda_end, unsigned double _lambda_step);
+    void setOpticalWavelength(double _lambda_start, double _lambda_end, double _lambda_step);
     ///for single wabelength calculation
-    void setOpticalWavelength(unsigned double _lambda);
+    void setOpticalWavelength(double _lambda);
     void setOpticalSourceSpectrum(LCDOptics::LIGHTSPECTRUMDATA _input);
-    void resetLCParam(const LCD1D:LCParamters _param, const size_t _lcLayerNum);
-    void resetLCRubbing(const LCD1D:RubbingCondition _rubbing);
+    void resetLCParam(const LCD1D::LCParamters _param, const size_t _lcLayerNum, double _dt=0.0);
+    void resetLCRubbing(const LCD1D::RubbingCondition _rubbing);
     void enableOptical2X2Calculation(bool _ifDo=true);
     void useOptical2X2Lambertian(bool _if=true);
     ///incident angles. originally using tuples, return std::pairs for Cython.
@@ -82,13 +83,13 @@ protected:
     std::shared_ptr<LCD1D::Epsilon> epsilonr;
     std::shared_ptr<LCD1D::Potential> potentials;
     std::shared_ptr<LCD1D::LCDirector> lcDir;
-    std::shared_ptr<LCDOptics::ExtendedJones> extJonesMain;
+    std::shared_ptr<LCD1D::ExtendedJones> extJonesMain;
     LCDOptics::MATERIALLAYERS2X2CONT materials;
     LCDOptics::IAngles inAngles;
     LCDOptics::LIGHTSPECTRUMDATA lightSrcSpectrum;
     ///They are lambda_start, lambda_end, lambda_step, if lambda_start == lambda_end, it's single wavelength calculation.
     ///default calculate 550nm single wavelength.
-    std::tuple<double, double, double> multiWavelengthLambdas = {0.55,0.55,0.0};
+    std::tuple<double, double, double> multiWavelengthLambdas = std::make_tuple(0.55,0.55,0.0);
     bool ifCalculate2X2Optics = false;
     bool ifUseLambertian = false;
     double dt;
@@ -101,17 +102,17 @@ class LCD1DStaticMain: public LCD1DMainBase{
 public:
     ///with LC calculation
     LCD1DStaticMain(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing,
-        double _voltStart, double _voltEnd, unsigned double _voltStep, double _maxIter, double _maxError);
+        double _voltStart, double _voltEnd, double _voltStep, double _maxIter, double _maxError);
     ///No LC calculation, optical calculation only
     LCD1DStaticMain();
     ///vector records which voltages are calculated.
     LCD::DOUBLEARRAY1D getCalcVolts() const;
     ///std::vector 3D container. [voltage index][iAngle index][iAngle index]
-    std::vector<LCDOptics::TRANSRESULT> getTransmissions()const;
+    std::vector<LCD1D::TRANSRESULT> getTransmissions()const;
     ///[volts index][z-grid index][component index]
-    std::vector<DOUBLEARRAY2D> getLCDirResults()const;
+    std::vector<LCD::DOUBLEARRAY2D> getLCDirResults()const;
     ///reset scanning voltages
-    void resetCalcVolts(double _voltStart, double _voltEnd, unsigned double _voltStep);
+    void resetCalcVolts(double _voltStart, double _voltEnd, double _voltStep);
     ///main function
     virtual void calculate();
 
@@ -122,7 +123,7 @@ private:
     double maxError;
     LCD::DOUBLEARRAY1D  calcVolts;
     std::vector<LCD::DOUBLEARRAY2D> lcDirResult;
-    std::vector<LCDOptics::TRANSRESULT> transResults;
+    std::vector<LCD1D::TRANSRESULT> transResults;
 };
 
 /**
@@ -144,20 +145,21 @@ public:
     ///vector records which time (in ms) data are recorded at.
     LCD::DOUBLEARRAY1D getRecordTime() const;
     ///std::vector 3D container. [records index][iAngle index][iAngle index]
-    std::vector<LCDOptics::TRANSRESULT> getTransmissions()const;
+    std::vector<LCD1D::TRANSRESULT> getTransmissions()const;
     ///[record time index][z-grid index][component index]
-    std::vector<DOUBLEARRAY2D> getLCDirResults()const;
+    std::vector<LCD::DOUBLEARRAY2D> getLCDirResults()const;
     virtual void calculate();
 private:
     ///record steps
     std::set<unsigned long> rsteps;
+    void checkStepsToDumpAndCalcOptics(size_t iternum);
     void calc2X2OpticsOneSetLCDir(LCD::DIRVEC directors);
-    std::shared_ptr<WaveformBase> waveform;
+    std::shared_ptr<LCD::WaveformBase> waveform;
     double maxCalcTime;
     LCD::DOUBLEARRAY1D recordSteps;
     LCD::DOUBLEARRAY1D recordTimes;
-    std::vector<DOUBLEARRAY2D> lcDirResult;
-    std::vector<LCDOptics::TRANSRESULT> transResults;
+    std::vector<LCD::DOUBLEARRAY2D> lcDirResult;
+    std::vector<LCD1D::TRANSRESULT> transResults;
 };
 
 #endif

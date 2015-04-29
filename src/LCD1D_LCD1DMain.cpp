@@ -292,7 +292,7 @@ std::vector<LCD1D::TRANSRESULT> LCD1DStaticMain::getTransmissions()const{
 }
 
 std::vector<LCD::DOUBLEARRAY2D> LCD1DStaticMain::getLCDirResults()const{
-	return lcDirResult;
+	return lcDirResults;
 }
 
 void LCD1DStaticMain::resetCalcVolts(double _voltStart, double _voltEnd, double _voltStep){
@@ -311,7 +311,7 @@ void LCD1DStaticMain::resetCalcVolts(double _voltStart, double _voltEnd, double 
 void LCD1DStaticMain::calculate(){
 	double residual = std::numeric_limits<double>::max();
 	//empty the resut storage
-	lcDirResult.clear();
+	lcDirResults.clear();
 	transResults.clear();
 	LCD::DOUBLEARRAY2D lcDirTemp;
 	for (auto volt: calcVolts){
@@ -323,7 +323,7 @@ void LCD1DStaticMain::calculate(){
 			lcDirTemp[i][1] = directors(i)(1);
 			lcDirTemp[i][2] = directors(i)(2);
 		}
-		lcDirResult.push_back(lcDirTemp);
+		lcDirResults.push_back(lcDirTemp);
 		calc2X2OpticsOneSetLCDir(directors);
 	}
 }
@@ -408,12 +408,12 @@ std::vector<LCD1D::TRANSRESULT> LCD1DDynamicMain::getTransmissions()const{
 }
 
 std::vector<LCD::DOUBLEARRAY2D> LCD1DDynamicMain::getLCDirResults()const{
-	return lcDirResult;
+	return lcDirResults;
 }
 
 void LCD1DDynamicMain::calculate(){
 	//empty the resut storage
-	lcDirResult.clear();
+	lcDirResults.clear();
 	transResults.clear();
 	recordSteps.clear();
 	recordTimes.clear();
@@ -437,7 +437,7 @@ void LCD1DDynamicMain::checkStepsToDumpAndCalcOptics(size_t iternum){
 		lcDirTemp[i][1] = directors(i)(1);
 		lcDirTemp[i][2] = directors(i)(2);
 	}
-	lcDirResult.push_back(lcDirTemp);
+	lcDirResults.push_back(lcDirTemp);
 	calc2X2OpticsOneSetLCDir(directors);
 }
 

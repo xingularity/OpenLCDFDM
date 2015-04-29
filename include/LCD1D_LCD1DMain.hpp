@@ -122,7 +122,7 @@ private:
     double maxIter;
     double maxError;
     LCD::DOUBLEARRAY1D  calcVolts;
-    std::vector<LCD::DOUBLEARRAY2D> lcDirResult;
+    std::vector<LCD::DOUBLEARRAY2D> lcDirResults;
     std::vector<LCD1D::TRANSRESULT> transResults;
 };
 
@@ -158,7 +158,7 @@ private:
     double maxCalcTime;
     LCD::DOUBLEARRAY1D recordSteps;
     LCD::DOUBLEARRAY1D recordTimes;
-    std::vector<LCD::DOUBLEARRAY2D> lcDirResult;
+    std::vector<LCD::DOUBLEARRAY2D> lcDirResults;
     std::vector<LCD1D::TRANSRESULT> transResults;
 };
 

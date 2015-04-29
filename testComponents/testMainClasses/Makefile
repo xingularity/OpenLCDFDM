@@ -5,7 +5,7 @@ all:
 	$(CXX) -g -fopenmp -c ../../src/LCD_SpectrumInterpolator.cpp -std=c++11 -I ../../include/
 	$(CXX) -g -fopenmp -c ../../src/LCD1D_ExtendedJones.cpp -std=c++11 -I ../../include/
 	$(CXX) -g -fopenmp -c ../../src/LCD1D_LCD1DMain.cpp -std=c++11 -I ../../include/
-	$(CXX) -g -fopenmp *.o testmainClasses.cpp -std=c++11 -I ../../include/
-	
+	$(CXX) -g -fopenmp *.o testMainClasses.cpp -std=c++11 -I ../../include/
+
 clean:
 	rm *.o a.out

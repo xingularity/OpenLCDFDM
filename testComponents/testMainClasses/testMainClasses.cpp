@@ -211,9 +211,70 @@ void testTN(){
     writeNormalTransmission(normalTrans, "TestTN_Normal_Multi_Lambertian");
 }
 
+void testTNDynamic(){
+    LCDOptics::LIGHTSPECTRUMDATA lightSrcSpectrum = ReadLightSourceSpectrum("TestLightSrc.csv");
+    std::map<double, std::vector<std::complex<double> > > polarizerSpectrum = ReadUniaxialNKData("TestPolarizerSpectrum.csv");
+    std::map<double, std::vector<std::complex<double> > > LCSpectrum = ReadUniaxialNKData("TestLCSpectrum.csv");
+    LCD1D::LCParamters LCParam = {4.0, 12, 3.6, 60, 12.0, 6.5, 15.0,  2.0*M_PI/70.0};
+    LCD1D::DielecParameters tftpiParam = {0.1, 3.6};
+    LCD1D::DielecParameters cfpiParam = {0.1, 3.6};
+    LCD1D::RubbingCondition rubbing = {89.0*M_PI/180.0, 45.0*M_PI/180.0, 89.0*M_PI/180.0, 90.0*M_PI/180.0};
+    LCD1D::LCD1DDynamicMain lcd1ddynamicmain(40, 0.01, LCParam, rubbing, 1000.0);
+    lcd1ddynamicmain.setTFTPI(tftpiParam);
+    lcd1ddynamicmain.setCFPI(cfpiParam);
+
+    //setup voltage waveform
+    std::map<double, double> stepVoltProfile;
+    stepVoltProfile[0] = 2.0;
+    stepVoltProfile[200] = 5.0;
+    stepVoltProfile[400] = -2.0;
+    stepVoltProfile[600] = -5.0;
+    lcd1ddynamicmain.setStepWaveform(stepVoltProfile, 800.0);
+
+    //setup dump time
+    LCD::DOUBLEARRAY1D timeToRecord;
+    timeToRecord.push_back(0);
+    timeToRecord.push_back(199);
+    timeToRecord.push_back(399);
+    timeToRecord.push_back(599);
+    timeToRecord.push_back(799);
+    timeToRecord.push_back(999);
+    lcd1ddynamicmain.setRecordTime(timeToRecord);
+
+    //setup optical parameters
+    LCD::DOUBLEARRAY2D axis(1);
+    axis[0] = LCD::DOUBLEARRAY1D(2);
+    axis[0][0] = 90.0*M_PI/180.0;
+    axis[0][1] = 135.0*M_PI/180.0;
+    lcd1ddynamicmain.addOpticalPolarizer(20.0, polarizerSpectrum, axis);
+    lcd1ddynamicmain.addOpticalLC(4.8, LCSpectrum);
+    axis[0][1] = 45.0*M_PI/180.0;
+    lcd1ddynamicmain.addOpticalPolarizer(20.0, polarizerSpectrum, axis);
+    lcd1ddynamicmain.setOpticalIncidentAngles(1,1);
+    lcd1ddynamicmain.setOpticalWavelength(0.38, 0.78, 0.01);
+    lcd1ddynamicmain.setOpticalSourceSpectrum(lightSrcSpectrum);
+    lcd1ddynamicmain.useOptical2X2Lambertian(true);
+    lcd1ddynamicmain.setOMPThreadNum(8);
+    lcd1ddynamicmain.createExtendedJones();
+    lcd1ddynamicmain.calculate();
+
+    std::vector<LCD1D::TRANSRESULT> trans = lcd1ddynamicmain.getTransmissions();
+    std::vector<std::vector<std::pair<double, double> > > inAngles = lcd1ddynamicmain.getIncidentAngles();
+    std::vector<LCD::DOUBLEARRAY2D> directors = lcd1ddynamicmain.getLCDirResults();
+    LCD::DOUBLEARRAY1D recordTime = lcd1ddynamicmain.getRecordTime();
+
+    for (int i = 0; i < recordTime.size(); ++i){
+        writeTransmissions(trans[i], inAngles, "TestDyanamicTN_" + toString(recordTime[i]) + "ms_Multi_Lambertian");
+        writeDirectors(directors[i], "TestDyanamicTN_" + toString(recordTime[i]) + "ms");
+    }
+    LCD::DOUBLEARRAY1D normalTrans = lcd1ddynamicmain.getNormalTransmissions();
+    writeNormalTransmission(normalTrans, "TestTNDynamic_Normal_Multi_Lambertian");
+}
+
 int main(int argc, const char *argv[])
 {
-    //testCrossPolarizerNoLC();
-    testTN();
+    testCrossPolarizerNoLC();
+    //testTN();
+    testTNDynamic();
     return 0;
 }

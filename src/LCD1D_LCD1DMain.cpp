@@ -34,6 +34,8 @@
 #include <omp.h>
 #include <limits>
 
+using namespace LCD1D;
+
 LCD1DMainBase::LCD1DMainBase(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing){
 	dt = _dt;
 	epsilonr.reset(new LCD1D::Epsilon(_lcLayerNum, _lcParam.thick));
@@ -41,6 +43,7 @@ LCD1DMainBase::LCD1DMainBase(double _lcLayerNum, double _dt, LCD1D::LCParamters 
 	potentials->createStaticUpdatePolicy();
 	lcDir.reset(new LCD1D::LCDirector(_lcLayerNum, _lcParam, _rubbing, *epsilonr));
 	lcDir->createVectorFormUpdater(*potentials, dt);
+	this->setOMPThreadNum(1); //default don't do parallel.
 }
 
 LCD1DMainBase::LCD1DMainBase(){}
@@ -96,7 +99,7 @@ size_t LCD1DMainBase::addOpticalUnaixialLayer(double _thick, std::map<double, st
 	}
 
 	LCD::DIRVEC axes;
-	axes.resize(axes.size());
+	axes.resize(_axes.size());
 	for (int i = 0; i < axes.extent(0); ++i){
 		if (_axes[i].size() != 2)
 			throw std::runtime_error("incorrect number of angles of optical axis in setting uniaxial layer");
@@ -147,18 +150,19 @@ void LCD1DMainBase::setOpticalIncidentAngles(double _thetaInterval, double _phiI
 
 	double acc_error = std::numeric_limits<double>::epsilon()*360.0;
 
-    while(thetas.back()+_thetaInterval <= (360+acc_error)){
+    while(thetas.back()+_thetaInterval <= (80+acc_error)){
         thetas.push_back(thetas.back() + _thetaInterval);
     };
 
-    while(phis.back()+_phiInterval <= (80+acc_error)){
+    while(phis.back()+_phiInterval <= (360+acc_error)){
         phis.push_back(phis.back() + _phiInterval);
     };
 
     inAngles = std::vector< std::vector<LCDOptics::Angle> >(thetas.size(), std::vector<LCDOptics::Angle>(phis.size()));
-    for (int i = 0; i <= thetas.size(); ++i)
-        for(int j = 0; j <= phis.size(); ++j)
+    for (int i = 0; i < thetas.size(); ++i)
+        for(int j = 0; j < phis.size(); ++j){
             inAngles[i][j] = LCDOptics::makeAngle2(thetas[i],phis[j]);
+		}
 
 }
 
@@ -192,12 +196,6 @@ void LCD1DMainBase::setOpticalSourceSpectrum(LCDOptics::LIGHTSPECTRUMDATA _input
     lightSrcSpectrum = _input;
 }
 
-void LCD1DMainBase::enableOptical2X2Calculation(bool _ifDo){
-	ifCalculate2X2Optics = _ifDo;
-	if (ifCalculate2X2Optics)
-		createExtendedJones();
-}
-
 void LCD1DMainBase::useOptical2X2Lambertian(bool _if){
 	ifUseLambertian = _if;
 }
@@ -222,6 +220,7 @@ void LCD1DMainBase::resetLCParam(const LCD1D::LCParamters _param, const size_t _
 		}
 	}
 
+    //reset LC thickness in materials
 	if (lcLayerindex > -1){
 		materials[lcLayerindex] -> resetThickness(_param.thick);
 	}
@@ -236,6 +235,7 @@ void LCD1DMainBase::resetLCParam(const LCD1D::LCParamters _param, const size_t _
 	lcDir.reset(new LCD1D::LCDirector(_lcLayerNum, _param, rubbing, *epsilonr));
 	lcDir->createVectorFormUpdater(*potentials, dt);
 }
+
 void LCD1DMainBase::resetLCRubbing(const LCD1D::RubbingCondition _rubbing){
     if (!lcDir){
         std::cout << "No LC calculation, change of LC rubbing condition doesn't happen." << std::endl;
@@ -245,7 +245,6 @@ void LCD1DMainBase::resetLCRubbing(const LCD1D::RubbingCondition _rubbing){
 }
 
 void LCD1DMainBase::createExtendedJones(){
-	if (!ifCalculate2X2Optics) return;
 	double lambda_start, lambda_end, lambda_step;
 	std::tie(lambda_start, lambda_end, lambda_step) = multiWavelengthLambdas;
 	//TODO: provide Stokes calculation support
@@ -279,6 +278,7 @@ LCD1DStaticMain::LCD1DStaticMain(double _lcLayerNum, double _dt, LCD1D::LCParamt
 	double _voltStart, double _voltEnd, double _voltStep, double _maxIter, double _maxError)
 	:LCD1DMainBase(_lcLayerNum, _dt, _lcParam, _rubbing), maxIter(_maxIter), maxError(_maxError){
 		potentials->createStaticUpdatePolicy();
+		resetCalcVolts(_voltStart, _voltEnd, _voltStep);
 	}
 
 LCD1DStaticMain::LCD1DStaticMain():LCD1DMainBase(){}
@@ -313,12 +313,21 @@ LCD::DOUBLEARRAY1D LCD1DStaticMain::getNormalTransmissions()const{
 }
 
 void LCD1DStaticMain::calculate(){
-	double residual = std::numeric_limits<double>::max();
 	//empty the resut storage
 	lcDirResults.clear();
 	transResults.clear();
+
+    if (!lcDir){
+        //for NO LC calculation
+        LCD1D::DIRVEC directors; //size 0 blitz::array 1D
+        calc2X2OpticsOneSetLCDir(directors);
+        return;
+    }
+
+    //For calcilation with LC
 	LCD::DOUBLEARRAY2D lcDirTemp;
 	for (auto volt: calcVolts){
+		std::cout << "Calculating voltages: " << volt << std::endl;
 		calculateOneVolt(volt);
 		LCD1D::DIRVEC directors(lcDir->getDirectors());
 		lcDirTemp.resize(directors.extent(0), std::vector<double>(3));
@@ -346,13 +355,26 @@ double LCD1DStaticMain::calculateOneVolt(double _volt){
         potentials->update(_volt);
         residual = lcDir->update();
 		iternum++;
+		/*
+		std::cout << iternum << ", " << residual << std::endl;
+		LCD1D::DIRVEC directors(lcDir->getDirectors());
+		for (int i = 0; i < directors.extent(0); ++i){
+			std::cout << directors(i)(0) << ", " << directors(i)(1) << ", " << directors(i)(2) << std::endl;
+		}
+		*/
     };
 	return residual;
 }
 
 void LCD1DStaticMain::calc2X2OpticsOneSetLCDir(LCD::DIRVEC directors){
 	if (!extJonesMain) return;
-	extJonesMain->resetLCDiretors(directors);
+    if(directors.extent(0) != 0){
+        int layerNum = directors.extent(0) - 1;
+		//Directors are depolyed on the grid while solving PDE.
+		//However, directors on the center of the cells are needed for optical calculation.
+	    extJonesMain->resetLCDiretors(directors, true);
+	}
+
 	extJonesMain->calculateExtendedJones();
 	transResults.push_back(extJonesMain->getTransmissions());
 	LCD1D::TRANSRESULT& temp = transResults.back();
@@ -459,7 +481,9 @@ void LCD1DDynamicMain::checkStepsToDumpAndCalcOptics(size_t iternum){
 
 void LCD1DDynamicMain::calc2X2OpticsOneSetLCDir(LCD::DIRVEC directors){
 	if (!extJonesMain) return;
-	extJonesMain->resetLCDiretors(directors);
+	//Directors are depolyed on the grid while solving PDE.
+	//However, directors on the center of the cells are needed for optical calculation.
+	extJonesMain->resetLCDiretors(directors, true);
 	extJonesMain->calculateExtendedJones();
 	transResults.push_back(extJonesMain->getTransmissions());
 	LCD1D::TRANSRESULT& temp = transResults.back();

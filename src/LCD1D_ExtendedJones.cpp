@@ -241,12 +241,29 @@ void ExtendedJones::resetStokes(){
         std::vector<STOKESTRACE>(inAngles[0].size())));
 }
 
-void ExtendedJones::resetLCDiretors(DIRVEC _in){
+void ExtendedJones::resetLCDiretors(DIRVEC _in, bool ifInterpolateToCenter){
     if (lcLayerindex >= 0){
+        //cast pointer type
         LCDOptics::Optical2x2UnixialPtr tempLayerPtr;
         tempLayerPtr = std::dynamic_pointer_cast<LCDOptics::Optical2X2OneLayer<LCDOptics::UniaxialType>,
             LCDOptics::Optical2X2OneLayerBase>(matLayers[lcLayerindex]);
-        if (tempLayerPtr) tempLayerPtr->resetAxes(_in);
+        if (!tempLayerPtr) return; //No change to LC directors when no LC layer exist.
+        if (ifInterpolateToCenter){
+            DIRVEC interpolated;
+            double theta, phi;
+            interpolated.resize(_in.extent(0) - 1);
+            for (int i = 0; i < interpolated.extent(0); ++i){
+                theta = 0.5*(std::acos(_in(i)(2)) + std::acos(_in(i+1)(2)));
+                phi = 0.5*(std::atan2(_in(i)(1), _in(i)(0)) + std::atan2(_in(i+1)(1), _in(i+1)(0)));
+                interpolated(i)(0) = std::sin(theta)*std::cos(phi);
+                interpolated(i)(1) = std::sin(theta)*std::sin(phi);
+                interpolated(i)(2) = std::cos(theta);
+            }
+            tempLayerPtr->resetAxes(interpolated);
+        }
+        else{
+            tempLayerPtr->resetAxes(_in);
+        }
     }
 }
 

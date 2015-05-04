@@ -65,7 +65,7 @@ namespace LCD1D{
         ///return the results of stokes values
         const STOKESRESULT& getStokes();
         ///reset directors in materials and the states of computing components to calculate optics based on input directors.
-        void resetLCDiretors(DIRVEC _in);
+        void resetLCDiretors(DIRVEC _in, bool ifInterpolateToCenter = false);
         void resetLCThickness(double _d);
         ///return if this object calculates stokes values
         bool isCalcStokes()const {return ifCalcStokes;}

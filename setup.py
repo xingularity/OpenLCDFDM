@@ -30,15 +30,24 @@
 ## OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 ##
 #########################################################################
+from distutils.core import setup
+from distutils.extension import Extension
+from Cython.Build import cythonize
 
-from libcpp.vector cimport vector
-from libcpp.map cimport map
-from libcpp.pair cimport pair
-from libcpp.string cimport string
+sourcefiles=['./openlcdfdm/lcd1d.pyx', './src/LCD1D_ExtendedJones.cpp', \
+    './src/LCD1D_FDM1DSolver.cpp', './src/LCD1D_LCD1DMain.cpp', './src/LCD_Optics2x2.cpp', \
+    './src/LCD_SpectrumInterpolator.cpp', './src/LCD_TimeWaveform.cpp']
 
-cdef extern from "LCD1D_LCD1DMain.hpp" namespace "LCD1D":
-    cdef cppclass LCD1DStaticMain:
-        #LCD1DStaticMain(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, #LCD1D::RubbingCondition _rubbing, \
-        #    double _voltStart, double _voltEnd, double _voltStep, double _maxIter, double _maxError)
-        LCD1DStaticMain()
+import platform as pm
+import sys
+if pm.system() == 'Darwin':
+    sitepkg_path=""
+    for i in sys.path:
+        if i.count("site-packages")>0:
+            sitepkg_path=i
+    extensions = [Extension('lcd', sourcefiles, language="c++", extra_compile_args=['-std=c++11', '-O3', '-fopenmp'], include_dirs = [sitepkg_path+"/numpy/core/include/", "./include/"])]
+else:
+	extensions = [Extension('lcd', sourcefiles, language="c++", extra_compile_args=['-std=c++11', '-O3', '-fopenmp'], include_dirs = ["./include/"])]
 
+setup(ext_modules = cythonize(extensions)
+      )

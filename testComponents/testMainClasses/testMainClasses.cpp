@@ -274,7 +274,7 @@ void testTNDynamic(){
 int main(int argc, const char *argv[])
 {
     testCrossPolarizerNoLC();
-    //testTN();
+    testTN();
     testTNDynamic();
     return 0;
 }

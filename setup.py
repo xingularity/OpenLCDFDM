@@ -41,13 +41,15 @@ sourcefiles=['./openlcdfdm/lcd1d.pyx', './src/LCD1D_ExtendedJones.cpp', \
 import platform as pm
 import sys
 if pm.system() == 'Darwin':
-    sitepkg_path=""
-    for i in sys.path:
-        if i.count("site-packages")>0:
-            sitepkg_path=i
-    extensions = [Extension('lcd', sourcefiles, language="c++", extra_compile_args=['-std=c++11', '-O3', '-fopenmp'], include_dirs = [sitepkg_path+"/numpy/core/include/", "./include/"])]
+    assert(False)
+    #sitepkg_path=""
+    #for i in sys.path:
+    #    if i.count("site-packages")>0:
+    #        sitepkg_path=i
+    #extensions = [Extension('lcd', sourcefiles, language="c++", extra_compile_args=['-std=c++11', '-O3', '-fopenmp'], include_dirs = [sitepkg_path+"/numpy/core/include/", "./include/"])]
 else:
-	extensions = [Extension('lcd', sourcefiles, language="c++", extra_compile_args=['-std=c++11', '-O3', '-fopenmp'], include_dirs = ["./include/"])]
+	extensions = [Extension('lcd1d', sourcefiles, language="c++", extra_compile_args=['-std=c++11', '-O3', '-fopenmp', '-lpthread'], \
+        extra_link_args=['-fopenmp'], include_dirs = ["./include/"])]
 
 setup(ext_modules = cythonize(extensions)
       )

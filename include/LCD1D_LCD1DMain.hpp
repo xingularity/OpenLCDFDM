@@ -42,6 +42,9 @@
 #include "LCD1D_FDM1DSolver.hpp"
 
 namespace LCD1D{
+    LCParamters createLCParameters(double _thick, double _epsr_para, double _epsr_perp, double _gamma, double _k11, double _k22, double _k33, double _q0);
+    DielecParameters createDielectricParameters(double _thick, double _epsr);
+    RubbingCondition createRubbingCondition(double _tftTheta, double _tftPhi, double _cfTheta, double _totalTwist);
 
     class LCD1DMainBase{
     public:
@@ -102,7 +105,7 @@ namespace LCD1D{
     class LCD1DStaticMain: public LCD1DMainBase{
     public:
         ///with LC calculation
-        LCD1DStaticMain(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing,
+        LCD1DStaticMain(double _lcLayerNum, double _dt, LCParamters _lcParam, RubbingCondition _rubbing,
             double _voltStart, double _voltEnd, double _voltStep, double _maxIter, double _maxError);
         ///No LC calculation, optical calculation only
         LCD1DStaticMain();
@@ -135,7 +138,7 @@ namespace LCD1D{
     */
     class LCD1DDynamicMain: public LCD1DMainBase{
     public:
-        LCD1DDynamicMain(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing, double _maxCalcTime);
+        LCD1DDynamicMain(double _lcLayerNum, double _dt, LCParamters _lcParam, RubbingCondition _rubbing, double _maxCalcTime);
         ///Directors and transmissions will be calculated and recorded at these time steps
         void setRecordTime(LCD::DOUBLEARRAY1D steps);
         ///Directors and transmissions will be calculated and recorded at these time steps

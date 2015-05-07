@@ -36,6 +36,32 @@
 
 using namespace LCD1D;
 
+LCParamters createLCParameters(double _thick, double _epsr_para, double _epsr_perp, double _gamma, double _k11, double _k22, double _k33, double _q0){
+	LCParamters ans;
+	ans.thick = _thick;
+	ans.epsr_para = _epsr_para;
+	ans.epsr_perp = _epsr_perp;
+	ans.gamma = _gamma;
+	ans.k11 = _k11;
+	ans.k22 = _k22;
+	ans.k33 = _k33;
+	ans.q0 = _q0;
+}
+
+DielecParameters createDielectricParameters(double _thick, double _epsr){
+	DielecParameters ans;
+	ans.thick = _thick;
+	ans.epsr = _epsr;
+}
+
+RubbingCondition createRubbingCondition(double _tftTheta, double _tftPhi, double _cfTheta, double _totalTwist){
+	RubbingCondition ans;
+	ans.tftTheta = _tftTheta;
+	ans.tftPhi = _tftPhi;
+	ans.cfTheta = _cfTheta;
+	ans.totalTwist = _totalTwist;
+}
+
 LCD1DMainBase::LCD1DMainBase(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing){
 	dt = _dt;
 	epsilonr.reset(new LCD1D::Epsilon(_lcLayerNum, _lcParam.thick));
@@ -48,11 +74,11 @@ LCD1DMainBase::LCD1DMainBase(double _lcLayerNum, double _dt, LCD1D::LCParamters 
 
 LCD1DMainBase::LCD1DMainBase(){}
 
-void LCD1DMainBase::setTFTPI(LCD1D::DielecParameters _tftpi){
+void LCD1DMainBase::setTFTPI(DielecParameters _tftpi){
 	epsilonr->setTFTPI(_tftpi);
 }
 
-void LCD1DMainBase::setCFPI(LCD1D::DielecParameters _cfpi){
+void LCD1DMainBase::setCFPI(DielecParameters _cfpi){
 	epsilonr->setCFPI(_cfpi);
 }
 
@@ -200,7 +226,7 @@ void LCD1DMainBase::useOptical2X2Lambertian(bool _if){
 	ifUseLambertian = _if;
 }
 
-void LCD1DMainBase::resetLCParam(const LCD1D::LCParamters _param, const size_t _lcLayerNum, const double _dt){
+void LCD1DMainBase::resetLCParam(const LCParamters _param, const size_t _lcLayerNum, const double _dt){
 	if (_dt != 0.0) dt = _dt;
 
 	if (!lcDir){
@@ -236,7 +262,7 @@ void LCD1DMainBase::resetLCParam(const LCD1D::LCParamters _param, const size_t _
 	lcDir->createVectorFormUpdater(*potentials, dt);
 }
 
-void LCD1DMainBase::resetLCRubbing(const LCD1D::RubbingCondition _rubbing){
+void LCD1DMainBase::resetLCRubbing(const RubbingCondition _rubbing){
     if (!lcDir){
         std::cout << "No LC calculation, change of LC rubbing condition doesn't happen." << std::endl;
         return;
@@ -274,7 +300,7 @@ std::vector<std::vector<std::pair<double, double> > > LCD1DMainBase::getIncident
 	return answer;
 }
 
-LCD1DStaticMain::LCD1DStaticMain(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing,
+LCD1DStaticMain::LCD1DStaticMain(double _lcLayerNum, double _dt, LCParamters _lcParam, RubbingCondition _rubbing,
 	double _voltStart, double _voltEnd, double _voltStep, double _maxIter, double _maxError)
 	:LCD1DMainBase(_lcLayerNum, _dt, _lcParam, _rubbing), maxIter(_maxIter), maxError(_maxError){
 		potentials->createStaticUpdatePolicy();
@@ -386,7 +412,7 @@ void LCD1DStaticMain::calc2X2OpticsOneSetLCDir(LCD::DIRVEC directors){
 	}
 }
 
-LCD1DDynamicMain::LCD1DDynamicMain(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing, double _maxCalcTime):
+LCD1DDynamicMain::LCD1DDynamicMain(double _lcLayerNum, double _dt, LCParamters _lcParam, RubbingCondition _rubbing, double _maxCalcTime):
 	LCD1DMainBase(_lcLayerNum, _dt, _lcParam, _rubbing), maxCalcTime(_maxCalcTime){
 	//put a default one first
 	waveform.reset(new LCD::DCWaveform(0.0));

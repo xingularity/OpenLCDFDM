@@ -174,50 +174,49 @@ cdef class pyLCD1DStaticMain:
         elif (len(args) == 2):
             self.thisptr.setOpticalIncidentAngleIntervals(args[0], args[1])
         else:
-            raise Exception("incorrect argumentt
+            raise Exception("incorrect argument to setup incicent angles")
     def setOpticalWavelength(self, *args):
         if (len(args) == 3):
             self.thisptr.setOpticalMultiWavelength(args[0], args[1], args[2])
         elif (len(args) == 1):
             self.thisptr.setOpticalWavelength(args[0])
         else:
-            raise Exception("incorrect argument number in setOpticalWavelength()") 
-    
+            raise Exception("incorrect argument number in setOpticalWavelength()")
+
     def setOpticalSourceSpectrum(self, dict spectrum not None):
         self.thisptr.setOpticalSourceSpectrum(spectrum)
-    
+
     def resetLCParam(self, lcparam, layerNum, dt):
         lcParamStruct = createLCParameters(lcparam['thick'], lcparam['epsr_para'], lcparam['epsr_perp'], lcparam['gamma'], lcparam['k11'],lcparam['k22'],lcparam['k33'],lcparam['q0'])
         self.thisptr.resetLCParam(lcParamStruct, layerNum, dt)
-    
+
     def resetLCRubbing(self, rubbing):
         rubbingCondSruct = createRubbingCondition(rubbing['tftTheta'], rubbing['tftPhi'], rubbing['cfTheta'], rubbing['totalTwist'])
         self.thisptr.resetLCRubbing(rubbingCondSruct)
-    
+
     def useOptical2X2Lambertian(self, _if=True):
         self.thisptr.useOptical2X2Lambertian(_if)
-    
+
     def createExtendedJones(self):
         self.thisptr.createExtendedJones()
-        
+
     def getIncidentAngles(self):
         return self.thisptr.getIncidentAngles()
-    
+
     def getCalcVolts(self):
         return self.thisptr.getCalcVolts()
-    
+
     def getTransmissions(self):
         return self.thisptr.getTransmissions()
-        
+
     def getLCDirResults(self):
         return self.thisptr.getLCDirResults()
-    
+
     def getNormalTransmissions(self):
         return self.thisptr.getNormalTransmissions()
-    
+
     def resetCalcVolts(self, voltStart, voltEnd, voltStep):
         return self.thisptr.resetCalcVolts(voltStart, voltEnd, voltStep)
-    
+
     def calculate(self):
         return self.thisptr.calculate()
-        

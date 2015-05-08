@@ -119,7 +119,7 @@ def testGlass():
     transmissions = np.array(lcd1dstaticmain.getTransmissions())
     transmissions = transmissions[0]
     writeTransmissions("GlassOnlyTransmission_MutiWavelength_Lambertian.csv", transmissions, inAngles)
-    
+
 def testCrossPolarizer():
     lcd1dstaticmain = pyLCD1DStaticMain()
     nk = readUniaxialSpectrum('TestPolarizerSpectrum.csv')
@@ -149,7 +149,7 @@ def testCrossPolarizer():
     transmissions = np.array(lcd1dstaticmain.getTransmissions())
     transmissions = transmissions[0]
     writeTransmissions("CrossPolarizer_MutiWavelength_Lambertian.csv", transmissions, inAngles)
-    
+
 def testTNStatic():
     nk = readUniaxialSpectrum('TestPolarizerSpectrum.csv')
     lcnk = readUniaxialSpectrum('TestLCSpectrum.csv')
@@ -182,14 +182,14 @@ def testTNStatic():
     writeDirectors("TestTN_Directors_5V.csv", directors[5])
     writeTransmissions("TestTN_Multi_Lambertian_2V.csv", transmissions[2], inAngles)
     writeTransmissions("TestTN_Multi_Lambertian_5V.csv", transmissions[5], inAngles)
-    writeNormalTrans('TestTN_Multi_Lambertian_NormalTrans.csv', lcd1dstaticmain.getNormalTransmissions())
+    writeNormalTrans('TestTN_Multi_Lambertian_NormalTrans.csv', np.array(lcd1dstaticmain.getNormalTransmissions()))
 
 def testTNDynamic():
     pass
 
 def main():
-    #testGlass()
-    #testCrossPolarizer()
+    testGlass()
+    testCrossPolarizer()
     testTNStatic()
 if __name__ == '__main__':
     main()

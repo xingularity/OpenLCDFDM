@@ -36,7 +36,7 @@
 
 using namespace LCD1D;
 
-LCParamters createLCParameters(double _thick, double _epsr_para, double _epsr_perp, double _gamma, double _k11, double _k22, double _k33, double _q0){
+LCParamters LCD1D::createLCParameters(double _thick, double _epsr_para, double _epsr_perp, double _gamma, double _k11, double _k22, double _k33, double _q0){
 	LCParamters ans;
 	ans.thick = _thick;
 	ans.epsr_para = _epsr_para;
@@ -48,13 +48,13 @@ LCParamters createLCParameters(double _thick, double _epsr_para, double _epsr_pe
 	ans.q0 = _q0;
 }
 
-DielecParameters createDielectricParameters(double _thick, double _epsr){
+DielecParameters LCD1D::createDielectricParameters(double _thick, double _epsr){
 	DielecParameters ans;
 	ans.thick = _thick;
 	ans.epsr = _epsr;
 }
 
-RubbingCondition createRubbingCondition(double _tftTheta, double _tftPhi, double _cfTheta, double _totalTwist){
+RubbingCondition LCD1D::createRubbingCondition(double _tftTheta, double _tftPhi, double _cfTheta, double _totalTwist){
 	RubbingCondition ans;
 	ans.tftTheta = _tftTheta;
 	ans.tftPhi = _tftPhi;
@@ -164,11 +164,15 @@ void LCD1DMainBase::removeOpticalLayer(size_t _index){
 	materials.erase(materials.begin()+_index);
 }
 
+void LCD1DMainBase::setOpticalIncidentAnglesToNormal(){setOpticalIncidentAngles();}
+
 void LCD1DMainBase::setOpticalIncidentAngles(){
 	inAngles.clear();
 	inAngles = std::vector< std::vector<LCDOptics::Angle> >(1, std::vector<LCDOptics::Angle>(1));
 	inAngles[0][0] = LCDOptics::makeAngle2(0.0, 0.0);
 }
+
+void LCD1DMainBase::setOpticalIncidentAngleIntervals(double _thetaInterval, double _phiInterval){setOpticalIncidentAngles(_thetaInterval, _phiInterval);}
 
 void LCD1DMainBase::setOpticalIncidentAngles(double _thetaInterval, double _phiInterval){
 	std::vector<double> thetas(1, 0.0);
@@ -198,6 +202,10 @@ void LCD1DMainBase::setOpticalIncidentAngles(std::vector<std::pair<double, doubl
     inAngles.push_back(std::vector<LCDOptics::Angle>(0));
     for (auto& i : _angles)
         inAngles[0].push_back(LCDOptics::makeAngle2(i.first, i.second));
+}
+
+void LCD1DMainBase::setOpticalMultiWavelength(double _lambda_start, double _lambda_end, double _lambda_step){
+    setOpticalWavelength(_lambda_start, _lambda_end, _lambda_step);
 }
 
 void LCD1DMainBase::setOpticalWavelength(double _lambda_start, double _lambda_end, double _lambda_step){

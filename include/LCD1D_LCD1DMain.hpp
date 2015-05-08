@@ -63,12 +63,18 @@ namespace LCD1D{
         void removeOpticalLayer(size_t _index);
         ///set incident angle in the optical calculation to normal incident only
         void setOpticalIncidentAngles();
+        ///The same as setOpticalIncidentAngles()
+        void setOpticalIncidentAnglesToNormal();
         ///Using scan interval degree to decide which angles to do.
         void setOpticalIncidentAngles(double _thetaInterval, double _phiInterval);
+        ///the same as setOpticalIncidentAngles(double _thetaInterval, double _phiInterval)
+        void setOpticalIncidentAngleIntervals(double _thetaInterval, double _phiInterval);
         ///input multiple incident angles without fix intervlas
         void setOpticalIncidentAngles(std::vector<std::pair<double, double> > _angles);
         ///for multiwavelength calculation
         void setOpticalWavelength(double _lambda_start, double _lambda_end, double _lambda_step);
+        ///the same as void setOpticalWavelength(double _lambda_start, double _lambda_end, double _lambda_step);
+        void setOpticalMultiWavelength(double _lambda_start, double _lambda_end, double _lambda_step);
         ///for single wabelength calculation
         void setOpticalWavelength(double _lambda);
         void setOpticalSourceSpectrum(LCDOptics::LIGHTSPECTRUMDATA _input);

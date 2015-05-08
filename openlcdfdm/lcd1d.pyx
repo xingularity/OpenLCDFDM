@@ -82,10 +82,10 @@ cdef extern from "LCD1D_LCD1DMain.hpp" namespace "LCD1D":
         size_t addOpticalUnaixialLayer(double _thick, map[double, vector[complex]] _nkSpectrum, OpticalMaterialClass _class, vector[vector[double]] _axes , int pos)
         size_t addOpticalLC(double _thick, map[double, vector[complex]] _nkSpectrum, int pos)
         void removeOpticalLayer(size_t _index)
-        void setOpticalIncidentAngles()
-        void setOpticalIncidentAngles(double _thetaInterval, double _phiInterval)
+        void setOpticalIncidentAnglesToNormal()
+        void setOpticalIncidentAngleIntervals(double _thetaInterval, double _phiInterval)
         void setOpticalIncidentAngles(vector[pair[double, double]] _angles)
-        void setOpticalWavelength(double _lambda_start, double _lambda_end, double _lambda_step)
+        void setOpticalMultiWavelength(double _lambda_start, double _lambda_end, double _lambda_step)
         void setOpticalWavelength(double _lambda)
         void setOpticalSourceSpectrum(map[double, double] _input)
         void resetLCParam(const LCParamters _param, const size_t _lcLayerNum, double _dt)
@@ -141,27 +141,19 @@ cdef class pyLCD1DStaticMain:
     def setOMPThreadNum(self, size_t _num):
         self.thisptr.setOMPThreadNum(_num)
 
-    def addOpticalGlassLayer(self, _thick not None, dict _nkSpectrum not None, int pos=None):
-        if (pos == None):
-            pos = -1
+    def addOpticalGlassLayer(self, _thick, dict _nkSpectrum not None, int pos = -1):
         return self.thisptr.addOpticalGlassLayer(_thick, _nkSpectrum, pos)
 
-    def addOpticalIsotropicLayer(self, _thick, dict _nkSpectrum not None, _class, int pos):
-        if (pos == None):
-            pos = -1
+    def addOpticalIsotropicLayer(self, _thick, dict _nkSpectrum not None, _class, int pos = -1):
         return self.thisptr.addOpticalIsotropicLayer(_thick, _nkSpectrum, _class, pos)
 
-    def addOpticalPolarizer(self, _thick, dict _nkSpectrum not None, _axes, int pos):
-        if (pos == None):
-            pos = -1
+    def addOpticalPolarizer(self, _thick, dict _nkSpectrum not None, _axes, int pos = -1):
         return self.thisptr.addOpticalPolarizer(_thick, _nkSpectrum, _axes, pos)
 
-    def addOpticalUnaixialLayer(self, _thick, dict _nkSpectrum not None, _class, _axes , int pos):
-        if (pos == None):
-            pos = -1
+    def addOpticalUnaixialLayer(self, _thick, dict _nkSpectrum not None, _class, _axes , int pos = -1):
         return self.thisptr.addOpticalUnaixialLayer(_thick, _nkSpectrum, _class, _axes, pos)
 
-    def addOpticalLC(self, _thick, dict _nkSpectrum not None, int pos):
+    def addOpticalLC(self, _thick, dict _nkSpectrum not None, int pos = -1):
         if (pos == None):
             pos = -1
         return self.thisptr.addOpticalLC(_thick, _nkSpectrum, pos)
@@ -169,5 +161,60 @@ cdef class pyLCD1DStaticMain:
     def removeOpticalLayer(self, _index):
         self.thisptr.removeOpticalLayer(_index)
 
-    def setOpticalIncidentAnglesWithInterval(self, _thetaInterval, _phiInterval):
-        self.thisptr.setOpticalIncidentAngles(_thetaInterval, _phiInterval)
+    def setOpticalIncidentAngles(self, *args):
+        if (len(args) == 0):
+            self.thisptr.setOpticalIncidentAnglesToNormal()
+        elif (len(args) == 2):
+            self.thisptr.setOpticalIncidentAngleIntervals(args[0], args[1])
+        else:
+            raise Exception("incorrect argument number in setOpticalIncidentAngles()")
+
+    def specifyOpticalIncidentAngles(self, angles):
+        self.thisptr.setOpticalIncidentAngles(angles)
+    
+    def setOpticalWavelength(self, *args):
+        if (len(args) == 3):
+            self.thisptr.setOpticalMultiWavelength(args[0], args[1], args[2])
+        elif (len(args) == 1):
+            self.thisptr.setOpticalWavelength(args[0])
+        else:
+            raise Exception("incorrect argument number in setOpticalWavelength()") 
+    
+    def setOpticalSourceSpectrum(self, dict spectrum not None):
+        self.thisptr.setOpticalSourceSpectrum(spectrum)
+    
+    def resetLCParam(self, lcparam, layerNum, dt):
+        lcParamStruct = createLCParameters(lcparam['thick'], lcparam['epsr_para'], lcparam['epsr_perp'], lcparam['gamma'], lcparam['k11'],lcparam['k22'],lcparam['k33'],lcparam['q0'])
+        self.thisptr.resetLCParam(lcParamStruct, layerNum, dt)
+    
+    def resetLCRubbing(self, rubbing):
+        rubbingCondSruct = createRubbingCondition(rubbing['tftTheta'], rubbing['tftPhi'], rubbing['cfTheta'], rubbing['totalTwist'])
+        self.thisptr.resetLCRubbing(rubbingCondSruct)
+    
+    def useOptical2X2Lambertian(self, _if=True):
+        self.thisptr.useOptical2X2Lambertian(_if)
+    
+    def createExtendedJones(self):
+        self.thisptr.createExtendedJones()
+        
+    def getIncidentAngles(self):
+        return self.thisptr.getIncidentAngles()
+    
+    def getCalcVolts(self):
+        return self.thisptr.getCalcVolts()
+    
+    def getTransmissions(self):
+        return self.thisptr.getTransmissions()
+        
+    def getLCDirResults(self):
+        return self.thisptr.getLCDirResults()
+    
+    def getNormalTransmissions(self):
+        return self.thisptr.getNormalTransmissions()
+    
+    def resetCalcVolts(self, voltStart, voltEnd, voltStep):
+        return self.thisptr.resetCalcVolts(voltStart, voltEnd, voltStep)
+    
+    def calculate(self):
+        return self.thisptr.calculate()
+        

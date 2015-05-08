@@ -76,6 +76,23 @@ def writeTransmissions(fname, data, inAngles):
             f.write(str(inAngles[i, j, 0]*180.0/np.pi)+", "+str(inAngles[i, j, 1]*180.0/np.pi)+", "+str(data[i, j])+"\n")
     f.close()
 
+def writeDirectors(fname, data):
+    f = open(fname, 'w')
+    if (len(data.shape) != 2):
+        raise Exception("data has wrong dimension numbers.")
+    for i in range(data.shape[0]):
+        f.write(str(data[i, 0])+","+str(data[i, 1])+","+str(data[i, 2])+"\n")
+    f.close()
+
+def writeNormalTrans(fname, data):
+    f = open(fname, 'w')
+    if (len(data.shape) != 1):
+        raise Exception("data has wrong dimension numbers.")
+    for i in range(data.shape[0]):
+        f.write(str(data[i])+"\n")
+    f.close()
+
+
 def testGlass():
     lcd1dstaticmain = pyLCD1DStaticMain()
     nk = readIsotropicSpectrum('TestGlassNKSpectrum.csv')
@@ -134,22 +151,45 @@ def testCrossPolarizer():
     writeTransmissions("CrossPolarizer_MutiWavelength_Lambertian.csv", transmissions, inAngles)
     
 def testTNStatic():
-    lcd1dstaticmain = pyLCD1DStaticMain()
     nk = readUniaxialSpectrum('TestPolarizerSpectrum.csv')
     lcnk = readUniaxialSpectrum('TestLCSpectrum.csv')
+    lcLayerNum = 40
+    lcThick = 4.0
+    lcCondition={'thick':lcThick, 'epsr_para':12.0, 'epsr_perp':3.6, 'gamma':60, 'k11':12.0, 'k22':6.5, 'k33':15.0, 'q0':2.0*np.pi/70.0}
+    rubbingCond={'tftTheta': 89.0*np.pi/180.0, 'tftPhi': 45.0*np.pi/180.0, 'cfTheta': 89.0*np.pi/180.0, 'totalTwist': 90.0*np.pi/180.0}
+    maxIter = 100000000
+    convergeError = 1.0e-8
+    lcd1dstaticmain = pyLCD1DStaticMain(lcLayerNum = lcLayerNum, dt = 0.01, lcparam = lcCondition, rubbing = rubbingCond, \
+        voltStart = 0.0, voltEnd = 7.0, voltStep = 1, maxIter = maxIter, convergeError = convergeError)
+    lcd1dstaticmain.setTFTPI(thick=0.1, epsr=3.6)
+    lcd1dstaticmain.setCFPI(thick=0.1, epsr=3.6)
     pol_angle = [[90.0*np.pi/180.0, 135.0*np.pi/180.0]]
     lcd1dstaticmain.addOpticalPolarizer(20.0, nk, pol_angle)
-    lcd1dstaticmain.addOpticalLC(4.0, lcnk)
+    lcd1dstaticmain.addOpticalLC(lcThick, lcnk)
     pol_angle = [[90.0*np.pi/180.0, 45.0*np.pi/180.0]]
     lcd1dstaticmain.addOpticalPolarizer(20.0, nk, pol_angle)
-    lcCondition={'thick':4.0, 'epsr_para':12.0, 'epsr_perp':3.6}
+    lcd1dstaticmain.setOMPThreadNum(8)
+    lcd1dstaticmain.setOpticalIncidentAngles(1,1)
+    lcd1dstaticmain.setOpticalSourceSpectrum(readLightSourceSpectrum('TestLightSrc.csv'))
+    lcd1dstaticmain.setOpticalWavelength(0.38, 0.78, 0.01)
+    lcd1dstaticmain.useOptical2X2Lambertian()
+    lcd1dstaticmain.createExtendedJones()
+    lcd1dstaticmain.calculate()
+    transmissions = np.array(lcd1dstaticmain.getTransmissions())
+    directors = np.array(lcd1dstaticmain.getLCDirResults())
+    inAngles = np.array(lcd1dstaticmain.getIncidentAngles())
+    writeDirectors("TestTN_Directors_2V.csv", directors[2])
+    writeDirectors("TestTN_Directors_5V.csv", directors[5])
+    writeTransmissions("TestTN_Multi_Lambertian_2V.csv", transmissions[2], inAngles)
+    writeTransmissions("TestTN_Multi_Lambertian_5V.csv", transmissions[5], inAngles)
+    writeNormalTrans('TestTN_Multi_Lambertian_NormalTrans.csv', lcd1dstaticmain.getNormalTransmissions())
 
 def testTNDynamic():
     pass
 
 def main():
-    testGlass()
-    testCrossPolarizer()
-
+    #testGlass()
+    #testCrossPolarizer()
+    testTNStatic()
 if __name__ == '__main__':
     main()

@@ -190,7 +190,7 @@ void testTN(){
     axis[0][0] = 90.0*M_PI/180.0;
     axis[0][1] = 135.0*M_PI/180.0;
     lcd1dstaticmain.addOpticalPolarizer(20.0, polarizerSpectrum, axis);
-    lcd1dstaticmain.addOpticalLC(4.8, LCSpectrum);
+    lcd1dstaticmain.addOpticalLC(4.0, LCSpectrum);
     axis[0][1] = 45.0*M_PI/180.0;
     lcd1dstaticmain.addOpticalPolarizer(20.0, polarizerSpectrum, axis);
     lcd1dstaticmain.setOpticalIncidentAngles(1,1);

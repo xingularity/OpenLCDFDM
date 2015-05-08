@@ -138,6 +138,13 @@ cdef class pyLCD1DStaticMain:
             dielecParamStruct = createDielectricParameters(kwargs['thick'], kwargs['epsr'])
         self.thisptr.setTFTPI(dielecParamStruct)
 
+    def setCFPI(self, **kwargs):
+        if (len(kwargs) == 0):
+            dielecParamStruct = createDielectricParameters(0.0, 0.0)
+        else:
+            dielecParamStruct = createDielectricParameters(kwargs['thick'], kwargs['epsr'])
+        self.thisptr.setCFPI(dielecParamStruct)
+
     def setOMPThreadNum(self, size_t _num):
         self.thisptr.setOMPThreadNum(_num)
 
@@ -167,11 +174,7 @@ cdef class pyLCD1DStaticMain:
         elif (len(args) == 2):
             self.thisptr.setOpticalIncidentAngleIntervals(args[0], args[1])
         else:
-            raise Exception("incorrect argument number in setOpticalIncidentAngles()")
-
-    def specifyOpticalIncidentAngles(self, angles):
-        self.thisptr.setOpticalIncidentAngles(angles)
-    
+            raise Exception("incorrect argumentt
     def setOpticalWavelength(self, *args):
         if (len(args) == 3):
             self.thisptr.setOpticalMultiWavelength(args[0], args[1], args[2])

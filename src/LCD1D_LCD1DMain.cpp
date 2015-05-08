@@ -46,12 +46,14 @@ LCParamters LCD1D::createLCParameters(double _thick, double _epsr_para, double _
 	ans.k22 = _k22;
 	ans.k33 = _k33;
 	ans.q0 = _q0;
+	return ans;
 }
 
 DielecParameters LCD1D::createDielectricParameters(double _thick, double _epsr){
 	DielecParameters ans;
 	ans.thick = _thick;
 	ans.epsr = _epsr;
+	return ans;
 }
 
 RubbingCondition LCD1D::createRubbingCondition(double _tftTheta, double _tftPhi, double _cfTheta, double _totalTwist){
@@ -60,6 +62,7 @@ RubbingCondition LCD1D::createRubbingCondition(double _tftTheta, double _tftPhi,
 	ans.tftPhi = _tftPhi;
 	ans.cfTheta = _cfTheta;
 	ans.totalTwist = _totalTwist;
+	return ans;
 }
 
 LCD1DMainBase::LCD1DMainBase(double _lcLayerNum, double _dt, LCD1D::LCParamters _lcParam, LCD1D::RubbingCondition _rubbing){

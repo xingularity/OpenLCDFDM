@@ -185,11 +185,45 @@ def testTNStatic():
     writeNormalTrans('TestTN_Multi_Lambertian_NormalTrans.csv', np.array(lcd1dstaticmain.getNormalTransmissions()))
 
 def testTNDynamic():
-    pass
+    nk = readUniaxialSpectrum('TestPolarizerSpectrum.csv')
+    lcnk = readUniaxialSpectrum('TestLCSpectrum.csv')
+    lcLayerNum = 40
+    lcThick = 4.0
+    lcCondition={'thick':lcThick, 'epsr_para':12.0, 'epsr_perp':3.6, 'gamma':60, 'k11':12.0, 'k22':6.5, 'k33':15.0, 'q0':2.0*np.pi/70.0}
+    rubbingCond={'tftTheta': 89.0*np.pi/180.0, 'tftPhi': 45.0*np.pi/180.0, 'cfTheta': 89.0*np.pi/180.0, 'totalTwist': 90.0*np.pi/180.0}
+    lcd1ddynamicmain = pyLCD1DDynamicMain(lcLayerNum = lcLayerNum, dt = 0.01, lcparam = lcCondition, rubbing = rubbingCond, \
+       maxCalcTime=1000.0)
+    stepVoltProfile={0:2.0, 200: 5.0, 400: -2.0, 600: -5.0}
+    lcd1ddynamicmain.setStepWaveform(stepVoltProfile, 800.0);
+    timeToRecord=[0, 199, 399, 599, 799, 999]
+    lcd1ddynamicmain.setRecordTime(timeToRecord)
+    lcd1ddynamicmain.setTFTPI(thick=0.1, epsr=3.6)
+    lcd1ddynamicmain.setCFPI(thick=0.1, epsr=3.6)
+    pol_angle = [[90.0*np.pi/180.0, 135.0*np.pi/180.0]]
+    lcd1ddynamicmain.addOpticalPolarizer(20.0, nk, pol_angle)
+    lcd1ddynamicmain.addOpticalLC(lcThick, lcnk)
+    pol_angle = [[90.0*np.pi/180.0, 45.0*np.pi/180.0]]
+    lcd1ddynamicmain.addOpticalPolarizer(20.0, nk, pol_angle)
+    lcd1ddynamicmain.setOMPThreadNum(8)
+    lcd1ddynamicmain.setOpticalIncidentAngles(1,1)
+    lcd1ddynamicmain.setOpticalSourceSpectrum(readLightSourceSpectrum('TestLightSrc.csv'))
+    lcd1ddynamicmain.setOpticalWavelength(0.38, 0.78, 0.01)
+    lcd1ddynamicmain.useOptical2X2Lambertian()
+    lcd1ddynamicmain.createExtendedJones()
+    lcd1ddynamicmain.calculate()
+    dumpTime = lcd1ddynamicmain.getRecordTime() 
+    transmissions = np.array(lcd1ddynamicmain.getTransmissions())
+    directors = np.array(lcd1ddynamicmain.getLCDirResults())
+    inAngles = np.array(lcd1ddynamicmain.getIncidentAngles())
+    for i in range(transmissions.shape[0]):
+        writeDirectors("TestTN_Directors_" + str(dumpTime[i]) + "ms.csv", directors[i])
+        writeTransmissions("TestTN_Multi_Lambertian_" + str(dumpTime[i]) + "ms.csv", transmissions[i], inAngles)
+    writeNormalTrans('TestTN_Multi_Lambertian_NormalTrans.csv', np.array(lcd1ddynamicmain.getNormalTransmissions()))
 
 def main():
-    testGlass()
-    testCrossPolarizer()
-    testTNStatic()
+    #testGlass()
+    #testCrossPolarizer()
+    #testTNStatic()
+    testTNDynamic()
 if __name__ == '__main__':
     main()

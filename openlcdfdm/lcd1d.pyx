@@ -104,6 +104,20 @@ cdef extern from "LCD1D_LCD1DMain.hpp" namespace "LCD1D":
         vector[double] getNormalTransmissions()const
         void resetCalcVolts(double _voltStart, double _voltEnd, double _voltStep)
         void calculate()
+    
+    cdef cppclass LCD1DDynamicMain(LCD1DMainBase):
+        LCD1DDynamicMain(double _lcLayerNum, double _dt, LCParamters _lcParam, RubbingCondition _rubbing, \
+            double _maxCalcTime)
+        void setRecordTime(vector[double] steps)
+        void setRecordInterval(double _interval)
+        void setDCWaveform(double _volt)
+        void setStepWaveform(map[double, double] _profile, double period)
+        vector[size_t] getRecordStep() const
+        vector[double] getRecordTime() const
+        vector[vector[vector[double]]] getTransmissions()const
+        vector[vector[vector[double]]] getLCDirResults()const
+        vector[double] getNormalTransmissions()const
+        void calculate()
 
 cdef class pyLCD1DStaticMain:
     cdef LCD1DStaticMain *thisptr
@@ -220,3 +234,128 @@ cdef class pyLCD1DStaticMain:
 
     def calculate(self):
         return self.thisptr.calculate()
+
+
+cdef class pyLCD1DDynamicMain:
+    cdef LCD1DDynamicMain *thisptr
+    cdef LCParamters lcParamStruct
+    cdef RubbingCondition rubbingCondSruct
+    cdef DielecParameters dielecParamStruct
+
+    def __cinit__(self, **kwargs):
+        if (len(kwargs) == 0):
+            assert False
+        else:
+            lcLayerNum = kwargs['lcLayerNum']
+            dt = kwargs['dt']
+            maxCalcTime = kwargs['maxCalcTime']
+            lcparam = kwargs['lcparam']
+            rubbing = kwargs['rubbing']
+            lcParamStruct = createLCParameters(lcparam['thick'], lcparam['epsr_para'], lcparam['epsr_perp'], lcparam['gamma'], lcparam['k11'],lcparam['k22'],lcparam['k33'],lcparam['q0'])
+            rubbingCondSruct = createRubbingCondition(rubbing['tftTheta'], rubbing['tftPhi'], rubbing['cfTheta'], rubbing['totalTwist'])
+            self.thisptr = new LCD1DDynamicMain(lcLayerNum, dt, lcParamStruct, rubbingCondSruct, maxCalcTime)
+
+    def __dealloc__(self):
+        del self.thisptr
+
+    def setTFTPI(self, **kwargs):
+        if (len(kwargs) == 0):
+            dielecParamStruct = createDielectricParameters(0.0, 0.0)
+        else:
+            dielecParamStruct = createDielectricParameters(kwargs['thick'], kwargs['epsr'])
+        self.thisptr.setTFTPI(dielecParamStruct)
+
+    def setCFPI(self, **kwargs):
+        if (len(kwargs) == 0):
+            dielecParamStruct = createDielectricParameters(0.0, 0.0)
+        else:
+            dielecParamStruct = createDielectricParameters(kwargs['thick'], kwargs['epsr'])
+        self.thisptr.setCFPI(dielecParamStruct)
+
+    def setOMPThreadNum(self, size_t _num):
+        self.thisptr.setOMPThreadNum(_num)
+
+    def addOpticalGlassLayer(self, _thick, dict _nkSpectrum not None, int pos = -1):
+        return self.thisptr.addOpticalGlassLayer(_thick, _nkSpectrum, pos)
+
+    def addOpticalIsotropicLayer(self, _thick, dict _nkSpectrum not None, _class, int pos = -1):
+        return self.thisptr.addOpticalIsotropicLayer(_thick, _nkSpectrum, _class, pos)
+
+    def addOpticalPolarizer(self, _thick, dict _nkSpectrum not None, _axes, int pos = -1):
+        return self.thisptr.addOpticalPolarizer(_thick, _nkSpectrum, _axes, pos)
+
+    def addOpticalUnaixialLayer(self, _thick, dict _nkSpectrum not None, _class, _axes , int pos = -1):
+        return self.thisptr.addOpticalUnaixialLayer(_thick, _nkSpectrum, _class, _axes, pos)
+
+    def addOpticalLC(self, _thick, dict _nkSpectrum not None, int pos = -1):
+        if (pos == None):
+            pos = -1
+        return self.thisptr.addOpticalLC(_thick, _nkSpectrum, pos)
+
+    def removeOpticalLayer(self, _index):
+        self.thisptr.removeOpticalLayer(_index)
+
+    def setOpticalIncidentAngles(self, *args):
+        if (len(args) == 0):
+            self.thisptr.setOpticalIncidentAnglesToNormal()
+        elif (len(args) == 2):
+            self.thisptr.setOpticalIncidentAngleIntervals(args[0], args[1])
+        else:
+            raise Exception("incorrect argument to setup incicent angles")
+    def setOpticalWavelength(self, *args):
+        if (len(args) == 3):
+            self.thisptr.setOpticalMultiWavelength(args[0], args[1], args[2])
+        elif (len(args) == 1):
+            self.thisptr.setOpticalWavelength(args[0])
+        else:
+            raise Exception("incorrect argument number in setOpticalWavelength()")
+
+    def setOpticalSourceSpectrum(self, dict spectrum not None):
+        self.thisptr.setOpticalSourceSpectrum(spectrum)
+
+    def resetLCParam(self, lcparam, layerNum, dt):
+        lcParamStruct = createLCParameters(lcparam['thick'], lcparam['epsr_para'], lcparam['epsr_perp'], lcparam['gamma'], lcparam['k11'],lcparam['k22'],lcparam['k33'],lcparam['q0'])
+        self.thisptr.resetLCParam(lcParamStruct, layerNum, dt)
+
+    def resetLCRubbing(self, rubbing):
+        rubbingCondSruct = createRubbingCondition(rubbing['tftTheta'], rubbing['tftPhi'], rubbing['cfTheta'], rubbing['totalTwist'])
+        self.thisptr.resetLCRubbing(rubbingCondSruct)
+
+    def useOptical2X2Lambertian(self, _if=True):
+        self.thisptr.useOptical2X2Lambertian(_if)
+
+    def createExtendedJones(self):
+        self.thisptr.createExtendedJones()
+    
+    def getRecordStep(self):
+        return self.thisptr.getRecordStep()
+    
+    def getRecordTime(self):
+        return self.thisptr.getRecordTime()
+        
+    def getIncidentAngles(self):
+        return self.thisptr.getIncidentAngles()
+
+    def getTransmissions(self):
+        return self.thisptr.getTransmissions()
+
+    def getLCDirResults(self):
+        return self.thisptr.getLCDirResults()
+
+    def getNormalTransmissions(self):
+        return self.thisptr.getNormalTransmissions()
+
+    def calculate(self):
+        return self.thisptr.calculate()
+    
+    def setRecordTime(self, list steps not None):
+        self.thisptr.setRecordTime(steps)
+    
+    def setRecordInterval(self, _interval):
+        self.thisptr.setRecordInterval(_interval)
+    
+    def setDCWaveform(self, _volt):
+        self.thisptr.setDCWaveform(_volt)
+    
+    def setStepWaveform(self, dict _profile not None, period):
+        self.thisptr.setStepWaveform(_profile, period)

@@ -104,64 +104,7 @@ def getAnglesForPolarPlot(inAngles):
     r, theta = np.meshgrid(zeniths, azimuths)
     return (theta, r)
 
-def testGlass():
-    lcd1dstaticmain = pyLCD1DStaticMain()
-    nk = readIsotropicSpectrum('TestGlassNKSpectrum.csv')
-    lcd1dstaticmain.addOpticalGlassLayer(500.0, nk)
-    lcd1dstaticmain.setOMPThreadNum(1)
-    lcd1dstaticmain.setOpticalIncidentAngles(1,1)
-    lcd1dstaticmain.setOpticalWavelength(0.55)
-    lcd1dstaticmain.createExtendedJones()
-    lcd1dstaticmain.calculate()
-    transmissions = np.array(lcd1dstaticmain.getTransmissions())
-    transmissions = transmissions[0]
-    inAngles = np.array(lcd1dstaticmain.getIncidentAngles())
-    writeTransmissions("GlassOnlyTransmission_550nm.csv", transmissions, inAngles)
-    lcd1dstaticmain.setOpticalWavelength(0.38, 0.78, 0.01)
-    lcd1dstaticmain.setOpticalSourceSpectrum(readLightSourceSpectrum('TestLightSrc.csv'))
-    lcd1dstaticmain.createExtendedJones()
-    lcd1dstaticmain.calculate()
-    transmissions = np.array(lcd1dstaticmain.getTransmissions())
-    transmissions = transmissions[0]
-    writeTransmissions("GlassOnlyTransmission_MutiWavelength.csv", transmissions, inAngles)
-    lcd1dstaticmain.useOptical2X2Lambertian();
-    lcd1dstaticmain.createExtendedJones()
-    lcd1dstaticmain.calculate()
-    transmissions = np.array(lcd1dstaticmain.getTransmissions())
-    transmissions = transmissions[0]
-    writeTransmissions("GlassOnlyTransmission_MutiWavelength_Lambertian.csv", transmissions, inAngles)
-
-def testCrossPolarizer():
-    lcd1dstaticmain = pyLCD1DStaticMain()
-    nk = readUniaxialSpectrum('TestPolarizerSpectrum.csv')
-    pol_angle = [[90.0*np.pi/180.0, 135.0*np.pi/180.0]]
-    lcd1dstaticmain.addOpticalPolarizer(20.0, nk, pol_angle)
-    pol_angle = [[90.0*np.pi/180.0, 45.0*np.pi/180.0]]
-    lcd1dstaticmain.addOpticalPolarizer(20.0, nk, pol_angle)
-    lcd1dstaticmain.setOMPThreadNum(1)
-    lcd1dstaticmain.setOpticalIncidentAngles(1,1)
-    lcd1dstaticmain.setOpticalWavelength(0.55)
-    lcd1dstaticmain.createExtendedJones()
-    lcd1dstaticmain.calculate()
-    transmissions = np.array(lcd1dstaticmain.getTransmissions())
-    transmissions = transmissions[0]
-    inAngles = np.array(lcd1dstaticmain.getIncidentAngles())
-    writeTransmissions("CrossPolarizer_550nm.csv", transmissions, inAngles)
-    lcd1dstaticmain.setOpticalWavelength(0.38, 0.78, 0.01)
-    lcd1dstaticmain.setOpticalSourceSpectrum(readLightSourceSpectrum('TestLightSrc.csv'))
-    lcd1dstaticmain.createExtendedJones()
-    lcd1dstaticmain.calculate()
-    transmissions = np.array(lcd1dstaticmain.getTransmissions())
-    transmissions = transmissions[0]
-    writeTransmissions("CrossPolarizer_MutiWavelength.csv", transmissions, inAngles)
-    lcd1dstaticmain.useOptical2X2Lambertian();
-    lcd1dstaticmain.createExtendedJones()
-    lcd1dstaticmain.calculate()
-    transmissions = np.array(lcd1dstaticmain.getTransmissions())
-    transmissions = transmissions[0]
-    writeTransmissions("CrossPolarizer_MutiWavelength_Lambertian.csv", transmissions, inAngles)
-
-def testTNStatic():
+def TNSTatic():
     nk = readUniaxialSpectrum('TestPolarizerSpectrum.csv')
     lcnk = readUniaxialSpectrum('TestLCSpectrum.csv')
     lcLayerNum = 40
@@ -189,52 +132,24 @@ def testTNStatic():
     transmissions = np.array(lcd1dstaticmain.getTransmissions())
     directors = np.array(lcd1dstaticmain.getLCDirResults())
     inAngles = np.array(lcd1dstaticmain.getIncidentAngles())
-    writeDirectors("TestTN_Directors_2V.csv", directors[2])
-    writeDirectors("TestTN_Directors_5V.csv", directors[5])
-    writeTransmissions("TestTN_Multi_Lambertian_2V.csv", transmissions[2], inAngles)
-    writeTransmissions("TestTN_Multi_Lambertian_5V.csv", transmissions[5], inAngles)
-    writeNormalTrans('TestTN_Multi_Lambertian_NormalTrans.csv', np.array(lcd1dstaticmain.getNormalTransmissions()))
-
-def testTNDynamic():
-    nk = readUniaxialSpectrum('TestPolarizerSpectrum.csv')
-    lcnk = readUniaxialSpectrum('TestLCSpectrum.csv')
-    lcLayerNum = 40
-    lcThick = 4.0
-    lcCondition={'thick':lcThick, 'epsr_para':12.0, 'epsr_perp':3.6, 'gamma':60, 'k11':12.0, 'k22':6.5, 'k33':15.0, 'q0':2.0*np.pi/70.0}
-    rubbingCond={'tftTheta': 89.0*np.pi/180.0, 'tftPhi': 45.0*np.pi/180.0, 'cfTheta': 89.0*np.pi/180.0, 'totalTwist': 90.0*np.pi/180.0}
-    lcd1ddynamicmain = pyLCD1DDynamicMain(lcLayerNum = lcLayerNum, dt = 0.01, lcparam = lcCondition, rubbing = rubbingCond, \
-       maxCalcTime=1000.0)
-    stepVoltProfile={0:2.0, 200: 5.0, 400: -2.0, 600: -5.0}
-    lcd1ddynamicmain.setStepWaveform(stepVoltProfile, 800.0);
-    timeToRecord=[0, 199, 399, 599, 799, 999]
-    lcd1ddynamicmain.setRecordTime(timeToRecord)
-    lcd1ddynamicmain.setTFTPI(thick=0.1, epsr=3.6)
-    lcd1ddynamicmain.setCFPI(thick=0.1, epsr=3.6)
-    pol_angle = [[90.0*np.pi/180.0, 135.0*np.pi/180.0]]
-    lcd1ddynamicmain.addOpticalPolarizer(20.0, nk, pol_angle)
-    lcd1ddynamicmain.addOpticalLC(lcThick, lcnk)
-    pol_angle = [[90.0*np.pi/180.0, 45.0*np.pi/180.0]]
-    lcd1ddynamicmain.addOpticalPolarizer(20.0, nk, pol_angle)
-    lcd1ddynamicmain.setOMPThreadNum(8)
-    lcd1ddynamicmain.setOpticalIncidentAngles(1,1)
-    lcd1ddynamicmain.setOpticalSourceSpectrum(readLightSourceSpectrum('TestLightSrc.csv'))
-    lcd1ddynamicmain.setOpticalWavelength(0.38, 0.78, 0.01)
-    lcd1ddynamicmain.useOptical2X2Lambertian()
-    lcd1ddynamicmain.createExtendedJones()
-    lcd1ddynamicmain.calculate()
-    dumpTime = lcd1ddynamicmain.getRecordTime()
-    transmissions = np.array(lcd1ddynamicmain.getTransmissions())
-    directors = np.array(lcd1ddynamicmain.getLCDirResults())
-    inAngles = np.array(lcd1ddynamicmain.getIncidentAngles())
-    for i in range(transmissions.shape[0]):
-        writeDirectors("TestTN_Directors_" + str(dumpTime[i]) + "ms.csv", directors[i])
-        writeTransmissions("TestTN_Multi_Lambertian_" + str(dumpTime[i]) + "ms.csv", transmissions[i], inAngles)
-    writeNormalTrans('TestTN_Multi_Lambertian_NormalTrans.csv', np.array(lcd1ddynamicmain.getNormalTransmissions()))
-
+    calcVolts = np.array(lcd1dstaticmain.getCalcVolts())
+    #writeDirectors("Ex1DTN_Directors_2V.csv", directors[2])
+    #writeDirectors("Ex1DTN_Directors_5V.csv", directors[5])
+    #writeTransmissions("Ex1DTN_Multi_Lambertian_2V.csv", transmissions[2], inAngles)
+    #writeTransmissions("Ex1DTN_Multi_Lambertian_5V.csv", transmissions[5], inAngles)
+    #writeNormalTrans('Ex1DTN_Multi_Lambertian_NormalTrans.csv', np.array(lcd1dstaticmain.getNormalTransmissions()))
+    #plot 5V data
+    theta, r = getAnglesForPolarPlot(inAngles)
+    for i in range(calcVolts.shape[0]):
+        #fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
+        fig, ax = plt.subplots()
+        ax.set_xlabel("azimuths(degree)")
+        ax.set_ylabel("zeniths(degree)")
+        cs = ax.contourf(theta, r, transmissions[i].T)
+        ax.set_title("TNStatic_Transmissions_" + str(calcVolts[i]) + "V")
+        plt.colorbar(cs)
+    plt.show()
 def main():
-    #testGlass()
-    #testCrossPolarizer()
-    testTNStatic()
-    #testTNDynamic()
+    TNSTatic()
 if __name__ == '__main__':
     main()

@@ -29,7 +29,9 @@ This code is distributed under BSD license. please read the LICENSE file in the 
 
 ## Compile and installation
 The complete setup.py hasn't been written yet. Users can manually run 
+
   python3 setup.py build
+
 in the repository root and copy the compiled lcd1d\*.so file to the directory where he/she prepare to run lcd1d. There are examples in "/examples/lcd1d_example/" directory. One can copy the so file to this directory and try example scripts "lcd1d_example_\*.py".
 
 ## Example plots

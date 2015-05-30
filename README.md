@@ -35,8 +35,12 @@ The complete setup.py hasn't been written yet. Users can manually run
 in the repository root and copy the compiled lcd1d\*.so file to the directory where he/she prepare to run lcd1d. There are examples in "/examples/lcd1d_example/" directory. One can copy the so file to this directory and try example scripts "lcd1d_example_\*.py".
 
 ## Example plots
-Voltage-tranmission curve from lcd1d module
+Voltage-tranmission curve from lcd1d module:
 ![TN1DVTCurve](/examples/readme_pictures/lcd1d_TN_VT.png)
+All angle transmission with cross polarizers:
+![1DCrossPolarizerTrans](/examples/readme_pictures/lcd1d_crosspolarizer.png)
+All angle transmission of 90-degree twist nematic LCD:
+![1DCrossPolarizerTrans](/examples/readme_pictures/lcd1d_TN_Transmission.png)
 
 ## References
 1. Optics of Liquid Crystal Display by Pochi Yeh and Claire Gu. ISBN: 0470181761

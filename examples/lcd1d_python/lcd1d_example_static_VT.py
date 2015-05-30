@@ -117,7 +117,7 @@ def TNSTatic():
         voltStart = 0.0, voltEnd = 7.0, voltStep = 0.1, maxIter = maxIter, convergeError = convergeError)
     lcd1dstaticmain.setTFTPI(thick=0.1, epsr=3.6)
     lcd1dstaticmain.setCFPI(thick=0.1, epsr=3.6)
-    pol_angle = [[90.0*np.pi/180.0, 45.0*np.pi/180.0]]
+    pol_angle = [[90.0*np.pi/180.0, 135.0*np.pi/180.0]]
     lcd1dstaticmain.addOpticalPolarizer(20.0, nk, pol_angle)
     lcd1dstaticmain.addOpticalLC(lcThick, lcnk)
     pol_angle = [[90.0*np.pi/180.0, 45.0*np.pi/180.0]]

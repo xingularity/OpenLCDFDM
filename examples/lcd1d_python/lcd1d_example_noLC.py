@@ -91,7 +91,7 @@ def getAnglesForPolarPlot(inAngles):
         for j in range(inAngles.shape[1]):
             zeniths.add(inAngles[i, j, 0]*180.0/np.pi)
             azimuths.add(inAngles[i, j, 1]*180.0/np.pi)
-    azimuths = np.array(list(azimuths))
+    azimuths = np.radians(list(azimuths))
     zeniths = np.array(list(zeniths))
     r, theta = np.meshgrid(zeniths, azimuths)
     return (theta, r)
@@ -124,14 +124,13 @@ def crossPolarizer():
     lcd1dstaticmain.calculate()
     transmissions = np.array(lcd1dstaticmain.getTransmissions())
     transmissions = transmissions[0]
-    writeTransmissions("CrossPolarizer_MutiWavelength_Lambertian.csv", transmissions, inAngles)
     #plot transmissions
     theta, r = getAnglesForPolarPlot(inAngles)
     fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
     #fig, ax = plt.subplots()
-    ax.set_xlabel("azimuths(degree)")
-    ax.set_ylabel("zeniths(degree)")
-    cs = ax.contourf(theta, r, transmissions.T)
+    ax.set_xlabel("phi(degree)")
+    ax.set_ylabel("theta(degree)")
+    cs = ax.contourf(theta, r, transmissions.T, 255)
     plt.colorbar(cs)
     plt.show()
 

@@ -99,7 +99,7 @@ def getAnglesForPolarPlot(inAngles):
         for j in range(inAngles.shape[1]):
             zeniths.add(inAngles[i, j, 0]*180.0/np.pi)
             azimuths.add(inAngles[i, j, 1]*180.0/np.pi)
-    azimuths = np.array(list(azimuths))
+    azimuths = np.radians(list(azimuths))
     zeniths = np.array(list(zeniths))
     r, theta = np.meshgrid(zeniths, azimuths)
     return (theta, r)
@@ -117,7 +117,7 @@ def TNSTatic():
         voltStart = 0.0, voltEnd = 7.0, voltStep = 1, maxIter = maxIter, convergeError = convergeError)
     lcd1dstaticmain.setTFTPI(thick=0.1, epsr=3.6)
     lcd1dstaticmain.setCFPI(thick=0.1, epsr=3.6)
-    pol_angle = [[90.0*np.pi/180.0, 135.0*np.pi/180.0]]
+    pol_angle = [[90.0*np.pi/180.0, 45.0*np.pi/180.0]]
     lcd1dstaticmain.addOpticalPolarizer(20.0, nk, pol_angle)
     lcd1dstaticmain.addOpticalLC(lcThick, lcnk)
     pol_angle = [[90.0*np.pi/180.0, 45.0*np.pi/180.0]]
@@ -141,11 +141,11 @@ def TNSTatic():
     #plot 5V data
     theta, r = getAnglesForPolarPlot(inAngles)
     for i in range(calcVolts.shape[0]):
-        #fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
-        fig, ax = plt.subplots()
-        ax.set_xlabel("azimuths(degree)")
-        ax.set_ylabel("zeniths(degree)")
-        cs = ax.contourf(theta, r, transmissions[i].T)
+        fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
+        #fig, ax = plt.subplots()
+        ax.set_xlabel("phi(degree)")
+        ax.set_ylabel("theta(degree)")
+        cs = ax.contourf(theta, r, transmissions[i].T, 255)
         ax.set_title("TNStatic_Transmissions_" + str(calcVolts[i]) + "V")
         plt.colorbar(cs)
     plt.show()

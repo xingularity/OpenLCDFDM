@@ -122,7 +122,7 @@ void ExtendedJones::calculateExtendedJones(){
             if (ifLambertian){
                 for (int i = 0; i < lambdas.size();++i)
                     for(int j = 0; j < transmissions.size(); ++j)
-                        for(int k = 0; k < transmissions[i].size(); ++k)
+                        for(int k = 0; k < transmissions[j].size(); ++k)
                             transEachLambda[i][j][k]*=cos(std::get<0>(inAngles[j][k]));
             }
 

@@ -35,6 +35,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from lcd1d import *
+from mpl_toolkits.mplot3d import axes3d
 
 def readLightSourceSpectrum(fname=''):
     if (len(fname) == 0):
@@ -139,6 +140,20 @@ def TNSTatic():
     ax.set_ylabel("Transmission")
     cs = ax.plot(calcVolts, normalTrans)
     ax.set_title("TNStatic_Normal_Transmissions")
+    # selectLC=50
+    # fig2 = plt.figure()
+    # ax2 = fig2.gca(projection='3d')
+    # X, Y, Z = np.meshgrid(np.arange(0, 1), np.arange(0,1), np.arange(0, 1, 1/(directors[selectLC].shape[0])))
+    # U = np.ndarray((1,1,directors[selectLC].shape[0]))
+    # U[0,0,:] = directors[selectLC, :, 0]
+    # V = np.ndarray((1,1,directors[selectLC].shape[0]))
+    # V[0,0,:] = directors[selectLC, :, 1]
+    # W = np.ndarray((1,1,directors[selectLC].shape[0]))
+    # W[0,0,:] = directors[selectLC, :, 2]
+    # ax2.quiver(X, Y, Z, U, V, W, length = 0.1, arrow_length_ratio = 0.0)
+    # ax2.set_xlabel("x")
+    # ax2.set_ylabel("y")
+    # ax2.set_zlabel("z")
     plt.show()
 def main():
     TNSTatic()

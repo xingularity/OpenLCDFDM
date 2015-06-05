@@ -35,6 +35,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from lcd1d import *
+import mpl_toolkits.mplot3d as plt3d
 
 def readLightSourceSpectrum(fname=''):
     if (len(fname) == 0):

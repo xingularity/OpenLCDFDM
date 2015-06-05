@@ -12,8 +12,8 @@
  *     notice, this list of conditions and the following disclaimer in
  *     the documentation and/or other materials provided with the
  *     distribution.
- *   * Neither the name of OpenLCDFDM nor the names of its contributors 
- *     may be used to endorse or promote products derived from this 
+ *   * Neither the name of OpenLCDFDM nor the names of its contributors
+ *     may be used to endorse or promote products derived from this
  *     software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -135,7 +135,7 @@ namespace LCDOptics{
     class ExtendedJonesBase{
     public:
         ///For sigle wavelength calculation, one need no LIGHTSPECTRUMDATA in single wavelength, if input, it will be ignored.
-        ExtendedJonesBase(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda, 
+        ExtendedJonesBase(MATERIALLAYERS2X2CONT& _materials, const IAngles _inAngles,const double targetLambda,
             LIGHTSPECTRUMDATA lightSrcSpectrum_ = LIGHTSPECTRUMDATA()):
         matLayers(_materials), inAngles(_inAngles), lambdas(1, targetLambda)
         {

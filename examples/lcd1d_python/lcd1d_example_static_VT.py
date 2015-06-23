@@ -110,12 +110,15 @@ def TNSTatic():
     lcnk = readUniaxialSpectrum('TestLCSpectrum.csv')
     lcLayerNum = 40
     lcThick = 4.0
-    lcCondition={'thick':lcThick, 'epsr_para':12.0, 'epsr_perp':3.6, 'gamma':60, 'k11':12.0, 'k22':6.5, 'k33':15.0, 'q0':2.0*np.pi/70.0}
-    rubbingCond={'tftTheta': 89.0*np.pi/180.0, 'tftPhi': 45.0*np.pi/180.0, 'cfTheta': 89.0*np.pi/180.0, 'totalTwist': 90.0*np.pi/180.0}
+    lcCondition={'thick':lcThick, 'epsr_para':12.0, 'epsr_perp':3.6, 'gamma':60, \
+        'k11':12.0, 'k22':6.5, 'k33':15.0, 'q0':2.0*np.pi/70.0}
+    rubbingCond={'tftTheta': 89.0*np.pi/180.0, 'tftPhi': 45.0*np.pi/180.0, 'cfTheta': \
+        89.0*np.pi/180.0, 'totalTwist': 90.0*np.pi/180.0}
     maxIter = 100000000
     convergeError = 1.0e-8
-    lcd1dstaticmain = pyLCD1DStaticMain(lcLayerNum = lcLayerNum, dt = 0.01, lcparam = lcCondition, rubbing = rubbingCond, \
-        voltStart = 0.0, voltEnd = 7.0, voltStep = 0.1, maxIter = maxIter, convergeError = convergeError)
+    lcd1dstaticmain = pyLCD1DStaticMain(lcLayerNum = lcLayerNum, dt = 0.01, \
+        lcparam = lcCondition, rubbing = rubbingCond, voltStart = 0.0, voltEnd = 7.0, \
+        voltStep = 0.1, maxIter = maxIter, convergeError = convergeError)
     lcd1dstaticmain.setTFTPI(thick=0.1, epsr=3.6)
     lcd1dstaticmain.setCFPI(thick=0.1, epsr=3.6)
     pol_angle = [[90.0*np.pi/180.0, 135.0*np.pi/180.0]]
@@ -140,20 +143,20 @@ def TNSTatic():
     ax.set_ylabel("Transmission")
     cs = ax.plot(calcVolts, normalTrans)
     ax.set_title("TNStatic_Normal_Transmissions")
-    # selectLC=50
-    # fig2 = plt.figure()
-    # ax2 = fig2.gca(projection='3d')
-    # X, Y, Z = np.meshgrid(np.arange(0, 1), np.arange(0,1), np.arange(0, 1, 1/(directors[selectLC].shape[0])))
-    # U = np.ndarray((1,1,directors[selectLC].shape[0]))
-    # U[0,0,:] = directors[selectLC, :, 0]
-    # V = np.ndarray((1,1,directors[selectLC].shape[0]))
-    # V[0,0,:] = directors[selectLC, :, 1]
-    # W = np.ndarray((1,1,directors[selectLC].shape[0]))
-    # W[0,0,:] = directors[selectLC, :, 2]
-    # ax2.quiver(X, Y, Z, U, V, W, length = 0.1, arrow_length_ratio = 0.0)
-    # ax2.set_xlabel("x")
-    # ax2.set_ylabel("y")
-    # ax2.set_zlabel("z")
+    selectLC=50
+    fig2 = plt.figure()
+    ax2 = fig2.gca(projection='3d')
+    X, Y, Z = np.meshgrid(np.arange(0, 1), np.arange(0,1), np.arange(0, 1, 1/(directors[selectLC].shape[0])))
+    U = np.ndarray((1,1,directors[selectLC].shape[0]))
+    U[0,0,:] = directors[selectLC, :, 0]
+    V = np.ndarray((1,1,directors[selectLC].shape[0]))
+    V[0,0,:] = directors[selectLC, :, 1]
+    W = np.ndarray((1,1,directors[selectLC].shape[0]))
+    W[0,0,:] = directors[selectLC, :, 2]
+    ax2.quiver(X, Y, Z, U, V, W, length = 0.1, arrow_length_ratio = 0.0)
+    ax2.set_xlabel("x")
+    ax2.set_ylabel("y")
+    ax2.set_zlabel("z")
     plt.show()
 def main():
     TNSTatic()

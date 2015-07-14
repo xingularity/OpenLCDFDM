@@ -60,7 +60,7 @@ def readUniaxialSpectrum(fname=''):
     temp = pd.read_csv(fname, sep=',',header=None).values
     answer={}
     for i in range(temp.shape[0]):
-        answer[temp[i,0]]=[temp[i,1]+1j*temp[i,2], temp[i,3]+1j*temp[i,4]]
+        answer[temp[i,0]]=[temp[i,1] + 1j*temp[i,2], temp[i,3] + 1j*temp[i,4]]
     return answer
 
 def writeTransmissions(fname, data, inAngles):
@@ -73,7 +73,7 @@ def writeTransmissions(fname, data, inAngles):
         raise Exception("Shapes of data and inAngles dooen't match.")
     for i in range(inAngles.shape[0]):
         for j in range(inAngles.shape[1]):
-            f.write(str(inAngles[i, j, 0]*180.0/np.pi)+", "+str(inAngles[i, j, 1]*180.0/np.pi)+", "+str(data[i, j])+"\n")
+            f.write(str(inAngles[i, j, 0]*180.0/np.pi) + ", " + str(inAngles[i, j, 1]*180.0/np.pi) + ", " + str(data[i, j]) + "\n")
     f.close()
 
 def writeDirectors(fname, data):
@@ -81,7 +81,7 @@ def writeDirectors(fname, data):
     if (len(data.shape) != 2):
         raise Exception("data has wrong dimension numbers.")
     for i in range(data.shape[0]):
-        f.write(str(data[i, 0])+","+str(data[i, 1])+","+str(data[i, 2])+"\n")
+        f.write(str(data[i, 0]) + "," + str(data[i, 1]) + "," + str(data[i, 2]) + "\n")
     f.close()
 
 def writeNormalTrans(fname, data):
@@ -109,10 +109,10 @@ def TNDynamic():
     lcnk = readUniaxialSpectrum('TestLCSpectrum.csv')
     lcLayerNum = 40
     lcThick = 4.0
-    lcCondition={'thick':lcThick, 'epsr_para':12.0, 'epsr_perp':3.6, 'gamma':60, 'k11':12.0, 'k22':6.5, 'k33':15.0, 'q0':2.0*np.pi/70.0}
+    lcCondition={'thick': lcThick, 'epsr_para': 12.0, 'epsr_perp': 3.6, 'gamma': 60, 'k11': 12.0, 'k22': 6.5, 'k33': 15.0, 'q0': 2.0*np.pi/70.0}
     rubbingCond={'tftTheta': 89.0*np.pi/180.0, 'tftPhi': 45.0*np.pi/180.0, 'cfTheta': 89.0*np.pi/180.0, 'totalTwist': 90.0*np.pi/180.0}
-    lcd1ddynamicmain = pyLCD1DDynamicMain(lcLayerNum = lcLayerNum, dt = 0.01, lcparam = lcCondition, rubbing = rubbingCond, \
-       maxCalcTime=1000.0)
+    lcd1ddynamicmain = pyLCD1DDynamicMain(lcLayerNum=lcLayerNum, dt=0.01, lcparam=lcCondition, rubbing=rubbingCond,
+                                          maxCalcTime=1000.0)
     stepVoltProfile={0:2.0, 200: 5.0, 400: -2.0, 600: -5.0}
     lcd1ddynamicmain.setStepWaveform(stepVoltProfile, 800.0);
     timeToRecord=[0, 199, 399, 599, 799, 999]

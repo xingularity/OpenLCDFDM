@@ -51,5 +51,15 @@ else:
 	extensions = [Extension('lcd1d', sourcefiles, language="c++", extra_compile_args=['-std=c++11', '-O3', '-fopenmp', '-lpthread'], \
         extra_link_args=['-fopenmp'], include_dirs = ["./include/"])]
 
-setup(ext_modules = cythonize(extensions)
+setup(
+      name='OpenLCDFDM',
+      version='0.1',
+      url='http://github.com/xingularity/openlcdfdm',
+      install_requires=['numpy', 'matplotlib', 'pandas', 'scipy', 'cython'],
+      license='3-clause BSD',
+      author='Zong-han, Xie',
+      author_email='icbm0926@gmail.com',
+      description='OpenLCDFDM is a first principle LCD optics simulator based on finite difference method.',
+      keywords='LCD, liquid crystal, simulation, finite difference, optics',
+      ext_modules = cythonize(extensions)
       )

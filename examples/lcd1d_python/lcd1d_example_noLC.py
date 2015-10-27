@@ -73,7 +73,7 @@ def writeTransmissions(fname, data, inAngles):
         raise Exception("Shapes of data and inAngles dooen't match.")
     for i in range(inAngles.shape[0]):
         for j in range(inAngles.shape[1]):
-            f.write(str(inAngles[i, j, 0]*180.0/np.pi)+", "+str(inAngles[i, j, 1]*180.0/np.pi)+", "+str(data[i, j])+"\n")
+            f.write(str(inAngles[i, j, 0]*180.0/np.pi) + ", " + str(inAngles[i, j, 1]*180.0/np.pi) + ", " + str(data[i, j]) + "\n")
     f.close()
 
 def writeNormalTrans(fname, data):
@@ -81,7 +81,7 @@ def writeNormalTrans(fname, data):
     if (len(data.shape) != 1):
         raise Exception("data has wrong dimension numbers.")
     for i in range(data.shape[0]):
-        f.write(str(data[i])+"\n")
+        f.write(str(data[i]) + "\n")
     f.close()
 
 def getAnglesForPolarPlot(inAngles):

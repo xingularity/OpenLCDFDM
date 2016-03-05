@@ -19,7 +19,8 @@ The last part is colorimetry calculation. It calculates human color perception b
     1. Matplotlib
     2. numpy
     3. scipy
-    2. Cython
+    4. Cython
+    5. cysignals (to handle ctrl-c in Cython code)
   4. OpenMP
 2. Compiler
   1. g++(>=4.8) or clang++, support for C++11.

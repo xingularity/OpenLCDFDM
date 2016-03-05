@@ -61,5 +61,5 @@ setup(
       author_email='icbm0926@gmail.com',
       description='OpenLCDFDM is a first principle LCD optics simulator based on finite difference method.',
       keywords='LCD, liquid crystal, simulation, finite difference, optics',
-      ext_modules = cythonize(extensions)
+      ext_modules = cythonize(extensions, include_path=sys.path)
       )

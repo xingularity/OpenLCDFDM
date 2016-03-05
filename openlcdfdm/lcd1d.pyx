@@ -31,6 +31,8 @@
 ##
 #########################################################################
 
+include "cysignals/signals.pxi"
+
 from libcpp.vector cimport vector
 from libcpp.map cimport map
 from libcpp.pair cimport pair
@@ -233,7 +235,10 @@ cdef class pyLCD1DStaticMain:
         return self.thisptr.resetCalcVolts(voltStart, voltEnd, voltStep)
 
     def calculate(self):
-        return self.thisptr.calculate()
+        sig_on()
+        ans = self.thisptr.calculate()
+        sig_off()
+        return ans
 
 
 cdef class pyLCD1DDynamicMain:
@@ -346,7 +351,10 @@ cdef class pyLCD1DDynamicMain:
         return self.thisptr.getNormalTransmissions()
 
     def calculate(self):
-        return self.thisptr.calculate()
+        sig_on()
+        ans = self.thisptr.calculate()
+        sig_off()
+        return ans
     
     def setRecordTime(self, list steps not None):
         self.thisptr.setRecordTime(steps)
